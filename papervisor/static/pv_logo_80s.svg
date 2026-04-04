@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="200" viewBox="0 0 640 200" fill="none" role="img" aria-label="PaperVisor logo">
+  <defs>
+    <!-- Rainbow gradient for pages -->
+    <linearGradient id="pv-rainbow" x1="0" y1="0" x2="1" y2="0" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#FF3B3B"/>
+      <stop offset="14%" stop-color="#FF7A2E"/>
+      <stop offset="28%" stop-color="#FFD52E"/>
+      <stop offset="42%" stop-color="#39E06D"/>
+      <stop offset="57%" stop-color="#2EDBFF"/>
+      <stop offset="71%" stop-color="#3B66FF"/>
+      <stop offset="86%" stop-color="#9B3BFF"/>
+      <stop offset="100%" stop-color="#FF3BCE"/>
+    </linearGradient>
+
+    <!-- Sunset gradient for 80s vibe -->
+    <linearGradient id="pv-sunset" x1="0" y1="0" x2="0" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%" stop-color="#FF3BCE"/>
+      <stop offset="55%" stop-color="#FF7A2E"/>
+      <stop offset="100%" stop-color="#FFD52E"/>
+    </linearGradient>
+
+    <!-- Neon glow -->
+    <filter id="pv-glow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#2EDBFF" flood-opacity="0.75"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#FF3BCE" flood-opacity="0.35"/>
+    </filter>
+
+    <!-- Soft shadow for depth -->
+    <filter id="pv-shadow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+
+    <!-- Clip the rainbow to the page block -->
+    <clipPath id="pv-pages-clip">
+      <path d="M120 52c-36 0-64 10-82 20v96c18-10 46-20 82-20 30 0 58 7 80 16V68c-22-9-50-16-80-16z"/>
+    </clipPath>
+
+    <!-- Scanline mask for the sun -->
+    <mask id="pv-scanlines">
+      <rect x="0" y="0" width="640" height="200" fill="white"/>
+      <g opacity="0.55">
+        <rect x="0" y="60" width="640" height="2" fill="black"/>
+        <rect x="0" y="74" width="640" height="2" fill="black"/>
+        <rect x="0" y="88" width="640" height="2" fill="black"/>
+        <rect x="0" y="102" width="640" height="2" fill="black"/>
+        <rect x="0" y="116" width="640" height="2" fill="black"/>
+        <rect x="0" y="130" width="640" height="2" fill="black"/>
+      </g>
+    </mask>
+  </defs>
+
+  <!-- Icon block -->
+  <g transform="translate(34, 22)">
+    <!-- 80s sun behind the book -->
+    <g filter="url(#pv-glow)" opacity="0.95">
+      <circle cx="84" cy="56" r="44" fill="url(#pv-sunset)" mask="url(#pv-scanlines)"/>
+    </g>
+
+    <!-- Book base (cover) -->
+    <g filter="url(#pv-shadow)">
+      <path d="M120 44c-36 0-64 10-82 20v106c18-10 46-20 82-20 30 0 58 7 80 16V60c-22-9-50-16-80-16z" fill="#0B0F1A"/>
+      <path d="M120 44c30 0 58 7 80 16" stroke="#2EDBFF" stroke-width="3" opacity="0.8"/>
+      <path d="M120 44c-36 0-64 10-82 20" stroke="#FF3BCE" stroke-width="3" opacity="0.75"/>
+    </g>
+
+    <!-- Rainbow pages inside -->
+    <g clip-path="url(#pv-pages-clip)" filter="url(#pv-glow)">
+      <rect x="28" y="62" width="176" height="100" rx="14" fill="url(#pv-rainbow)" opacity="0.95"/>
+      <!-- subtle page lines -->
+      <g opacity="0.18" stroke="#0B0F1A" stroke-width="2">
+        <path d="M30 82H204"/>
+        <path d="M30 102H204"/>
+        <path d="M30 122H204"/>
+        <path d="M30 142H204"/>
+      </g>
+    </g>
+
+    <!-- Book spine highlight -->
+    <path d="M38 70c14-6 34-12 58-15v108c-24 3-44 9-58 15V70z" fill="#111A2E" opacity="0.85"/>
+    <path d="M44 76c10-4 26-8 46-11" stroke="#FFFFFF" stroke-width="2" opacity="0.18"/>
+
+    <!-- Small bookmark / accent -->
+    <path d="M158 64v34l-10-8-10 8V62c6 1 13 2 20 2z" fill="#2EDBFF" opacity="0.85" filter="url(#pv-glow)"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(270, 58)" filter="url(#pv-glow)">
+    <text x="0" y="56" fill="#EAF2FF" font-size="54" font-weight="800" font-family="system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif" letter-spacing="0.5">
+      PaperVisor
+    </text>
+    <text x="2" y="86" fill="#9CCBFF" font-size="16" font-weight="600" font-family="system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif" opacity="0.9">
+      library • books • reading
+    </text>
+
+    <!-- Neon underline -->
+    <path d="M0 98H300" stroke="url(#pv-rainbow)" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+  </g>
+</svg>

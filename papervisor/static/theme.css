@@ -1,0 +1,3103 @@
+/* ==========================================================================
+   PaperVisor Theme — CSS Custom Properties + Component Styles
+   ==========================================================================
+   All colours and key dimensions are defined as custom properties on :root
+   so that a light mode (or any alternative theme) can override them in a
+   single block without touching component rules.
+   ========================================================================== */
+
+/* ------------------------------------------------------------------
+   1. Custom Properties — Dark (default)
+   ------------------------------------------------------------------ */
+:root {
+    /* Spacing scale */
+    --pv-space-1: 4px;
+    --pv-space-2: 8px;
+    --pv-space-3: 12px;
+    --pv-space-4: 16px;
+    --pv-space-5: 20px;
+    --pv-space-6: 24px;
+
+    /* Radius scale */
+    --pv-radius-sm: 8px;
+    --pv-radius-md: 12px;
+    --pv-radius-lg: 16px;
+
+    /* Elevation */
+    --pv-shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.18);
+    --pv-shadow-md: 0 6px 20px rgba(0, 0, 0, 0.24);
+    --pv-shadow-lg: 0 10px 28px rgba(0, 0, 0, 0.34);
+
+    /* Backgrounds */
+    --pv-bg: #0b1220;
+    --pv-bg-surface: rgba(255, 255, 255, 0.04);
+    --pv-bg-surface-2: rgba(255, 255, 255, 0.06);
+    --pv-bg-header: rgba(255, 255, 255, 0.08);
+    --pv-bg-card: rgba(255, 255, 255, 0.04);
+    --pv-bg-card-hover-border: rgba(34, 197, 94, 0.35);
+    --pv-bg-overlay: rgba(0, 0, 0, 0.50);
+
+    /* Text */
+    --pv-text: rgba(255, 255, 255, 0.92);
+    --pv-text-dim: rgba(255, 255, 255, 0.72);
+    --pv-text-dimmer: rgba(255, 255, 255, 0.55);
+
+    /* Borders */
+    --pv-border: rgba(255, 255, 255, 0.08);
+    --pv-border-hover: rgba(255, 255, 255, 0.10);
+
+    /* Accent / brand */
+    --pv-accent: #22c55e;
+    --pv-accent-15: rgba(34, 197, 94, 0.15);
+    --pv-accent-20: rgba(34, 197, 94, 0.20);
+    --pv-accent-75: rgba(34, 197, 94, 0.75);
+    --pv-accent-95: rgba(34, 197, 94, 0.95);
+
+    /* Nav hover */
+    --pv-nav-hover: rgba(255, 255, 255, 0.07);
+    --pv-nav-active-bg: var(--pv-accent-15);
+    --pv-nav-active-border: var(--pv-accent-75);
+    --pv-nav-active-hover: var(--pv-accent-20);
+
+    /* Corner button overlay */
+    --pv-corner-bg: rgba(0, 0, 0, 0.35);
+    --pv-corner-border: rgba(255, 255, 255, 0.10);
+
+    /* Footer */
+    --pv-poster-footer-bg: rgba(0, 0, 0, 0.50);
+
+    /* Stat cards */
+    --pv-stat-blue-bg: rgba(59, 130, 246, 0.15);
+    --pv-stat-blue-fg: rgb(96, 165, 250);
+    --pv-stat-red-bg: rgba(239, 68, 68, 0.15);
+    --pv-stat-red-fg: rgb(248, 113, 113);
+    --pv-stat-orange-bg: rgba(249, 115, 22, 0.15);
+    --pv-stat-orange-fg: rgb(251, 146, 60);
+    --pv-stat-green-bg: rgba(34, 197, 94, 0.15);
+    --pv-stat-green-fg: rgb(74, 222, 128);
+
+    /* Menu / popup */
+    --pv-menu-bg: var(--q-dark);
+    --pv-menu-border: var(--pv-border);
+    --pv-menu-item-hover: rgba(255, 255, 255, 0.06);
+
+    /* Chip / badge */
+    --pv-chip-bg: rgba(255, 255, 255, 0.06);
+    --pv-chip-border: rgba(255, 255, 255, 0.08);
+
+    /* Top bar */
+    --pv-topbar-btn-bg: rgba(255, 255, 255, 0.04);
+    --pv-topbar-btn-hover: rgba(255, 255, 255, 0.08);
+    --pv-topbar-glow: rgba(59, 130, 246, 0.06);
+    --pv-search-shell-bg: rgba(9, 16, 30, 0.66);
+    --pv-search-shell-border: rgba(120, 144, 178, 0.24);
+    --pv-search-focus-ring: rgba(34, 197, 94, 0.16);
+
+    /* List rows */
+    --pv-list-cover-bg: rgba(255, 255, 255, 0.04);
+    --pv-list-cover-border: rgba(255, 255, 255, 0.08);
+
+    /* Skeleton / loading */
+    --pv-skeleton-from: rgba(255, 255, 255, 0.04);
+    --pv-skeleton-to: rgba(255, 255, 255, 0.10);
+
+    /* Gradient system */
+    --pv-bg-canvas-top: #0f1a2d;
+    --pv-bg-canvas-mid: #0d1626;
+    --pv-bg-canvas-bottom: #0b1220;
+    --pv-bg-glow-1: rgba(34, 197, 94, 0.14);
+    --pv-bg-glow-2: rgba(59, 130, 246, 0.12);
+    --pv-bg-glow-3: rgba(249, 115, 22, 0.10);
+    --pv-surface-grad-top: rgba(255, 255, 255, 0.045);
+    --pv-surface-grad-bottom: rgba(255, 255, 255, 0.015);
+    --pv-surface-glow: rgba(34, 197, 94, 0.08);
+}
+
+/* ------------------------------------------------------------------
+   1b. Custom Properties — Light mode override
+   ------------------------------------------------------------------ */
+:root[data-theme="light"] {
+    --pv-bg: #f4f5f7;
+    --pv-bg-surface: rgba(0, 0, 0, 0.03);
+    --pv-bg-surface-2: rgba(0, 0, 0, 0.05);
+    --pv-bg-header: rgba(0, 0, 0, 0.04);
+    --pv-bg-card: #ffffff;
+    --pv-bg-card-hover-border: rgba(34, 197, 94, 0.50);
+    --pv-bg-overlay: rgba(0, 0, 0, 0.40);
+
+    --pv-text: rgba(0, 0, 0, 0.87);
+    --pv-text-dim: rgba(0, 0, 0, 0.60);
+    --pv-text-dimmer: rgba(0, 0, 0, 0.42);
+
+    --pv-border: rgba(0, 0, 0, 0.10);
+    --pv-border-hover: rgba(0, 0, 0, 0.18);
+
+    --pv-nav-hover: rgba(0, 0, 0, 0.05);
+    --pv-nav-active-bg: rgba(34, 197, 94, 0.10);
+    --pv-nav-active-hover: rgba(34, 197, 94, 0.16);
+
+    --pv-corner-bg: rgba(255, 255, 255, 0.70);
+    --pv-corner-border: rgba(0, 0, 0, 0.12);
+
+    --pv-poster-footer-bg: rgba(255, 255, 255, 0.80);
+
+    --pv-stat-blue-bg: rgba(59, 130, 246, 0.10);
+    --pv-stat-red-bg: rgba(239, 68, 68, 0.10);
+    --pv-stat-orange-bg: rgba(249, 115, 22, 0.10);
+    --pv-stat-green-bg: rgba(34, 197, 94, 0.10);
+
+    --pv-menu-bg: #ffffff;
+    --pv-menu-border: rgba(0, 0, 0, 0.10);
+    --pv-menu-item-hover: rgba(0, 0, 0, 0.05);
+
+    --pv-chip-bg: rgba(0, 0, 0, 0.05);
+    --pv-chip-border: rgba(0, 0, 0, 0.10);
+
+    --pv-topbar-btn-bg: rgba(0, 0, 0, 0.04);
+    --pv-topbar-btn-hover: rgba(0, 0, 0, 0.08);
+    --pv-topbar-glow: rgba(59, 130, 246, 0.04);
+    --pv-search-shell-bg: rgba(255, 255, 255, 0.84);
+    --pv-search-shell-border: rgba(102, 125, 153, 0.28);
+    --pv-search-focus-ring: rgba(34, 197, 94, 0.14);
+
+    --pv-list-cover-bg: rgba(0, 0, 0, 0.03);
+    --pv-list-cover-border: rgba(0, 0, 0, 0.08);
+
+    --pv-skeleton-from: rgba(0, 0, 0, 0.06);
+    --pv-skeleton-to: rgba(0, 0, 0, 0.12);
+
+    --pv-bg-canvas-top: #f8f9fb;
+    --pv-bg-canvas-mid: #f4f5f7;
+    --pv-bg-canvas-bottom: #eef1f5;
+    --pv-bg-glow-1: rgba(34, 197, 94, 0.08);
+    --pv-bg-glow-2: rgba(59, 130, 246, 0.08);
+    --pv-bg-glow-3: rgba(249, 115, 22, 0.08);
+    --pv-surface-grad-top: rgba(255, 255, 255, 0.82);
+    --pv-surface-grad-bottom: rgba(255, 255, 255, 0.62);
+    --pv-surface-glow: rgba(34, 197, 94, 0.05);
+}
+
+/* ------------------------------------------------------------------
+   2. Base / Reset
+   ------------------------------------------------------------------ */
+
+/* Material Symbols Outlined as default icon font */
+.material-icons {
+    font-family: 'Material Symbols Outlined' !important;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+html,
+body,
+body.bg-transparent,
+body.body--dark.bg-transparent,
+body.body--light.bg-transparent {
+    background-color: var(--pv-bg-canvas-bottom) !important;
+    background-image:
+        radial-gradient(circle at 10% 8%, var(--pv-bg-glow-1), transparent 32%),
+        radial-gradient(circle at 88% 12%, var(--pv-bg-glow-2), transparent 28%),
+        radial-gradient(circle at 62% 100%, var(--pv-bg-glow-3), transparent 30%),
+        linear-gradient(180deg, var(--pv-bg-canvas-top) 0%, var(--pv-bg-canvas-mid) 34%, var(--pv-bg-canvas-bottom) 100%) !important;
+    color: var(--pv-text) !important;
+    overflow-x: hidden;
+}
+
+#app,
+#q-app {
+    background-color: var(--pv-bg-canvas-bottom) !important;
+}
+
+html::before,
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.028) 0, transparent 1px),
+        radial-gradient(circle at 75% 34%, rgba(255, 255, 255, 0.022) 0, transparent 1px);
+    background-size: 22px 22px, 30px 30px;
+    opacity: 0.5;
+    z-index: 0;
+}
+
+.q-layout,
+.q-page-container {
+    background: transparent !important;
+    position: relative;
+    z-index: 1;
+}
+
+.q-page {
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--pv-accent) 10%, transparent), transparent 44%),
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        color-mix(in srgb, var(--pv-bg) 96%, var(--pv-text) 4%) !important;
+    position: relative;
+    z-index: 1;
+}
+
+/* ------------------------------------------------------------------
+   3. Utility classes
+   ------------------------------------------------------------------ */
+
+.pv-surface {
+    background: var(--pv-bg-surface);
+}
+
+.pv-surface-2 {
+    background: var(--pv-bg-surface-2);
+}
+
+.pv-solid {
+    background: var(--pv-bg) !important;
+}
+
+.pv-text-dim {
+    color: var(--pv-text-dim);
+}
+
+.pv-text-dimmer {
+    color: var(--pv-text-dimmer);
+}
+
+.pv-chip {
+    background: var(--pv-chip-bg);
+    border: 1px solid var(--pv-chip-border);
+}
+
+.pv-card {
+    background:
+        radial-gradient(circle at 100% 0, var(--pv-surface-glow), transparent 38%),
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        var(--pv-bg-card);
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-md);
+    box-shadow: var(--pv-shadow-sm);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: border-color 220ms ease, transform 220ms cubic-bezier(.4, 0, .2, 1), box-shadow 220ms ease;
+}
+
+.pv-card:hover {
+    border-color: var(--pv-bg-card-hover-border);
+    transform: translateY(-1px);
+    box-shadow: var(--pv-shadow-md);
+}
+
+.pv-nav-badge-slot {
+    height: 24px;
+    display: flex;
+    align-items: center;
+}
+
+/* ------------------------------------------------------------------
+   4. Header
+   ------------------------------------------------------------------ */
+
+.pv-header {
+    background:
+        linear-gradient(135deg, var(--pv-surface-glow), transparent 42%),
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)) !important;
+    border-bottom: 1px solid var(--pv-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+@supports (color: color-mix(in srgb, #000 50%, #fff 50%)) {
+    .pv-header {
+        background: color-mix(in srgb, var(--pv-bg) 88%, var(--pv-text) 12%) !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   4b. Page shell + top bar controls
+   ------------------------------------------------------------------ */
+
+.pv-page-shell {
+    width: 100%;
+    min-height: 100%;
+}
+
+.pv-topbar {
+    background: color-mix(in srgb, var(--pv-bg) 90%, var(--pv-text) 10%) !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--pv-border) 88%, transparent 12%);
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.pv-brand-btn .q-btn__wrapper {
+    border-radius: var(--pv-radius-md) !important;
+    border: 1px solid color-mix(in srgb, var(--pv-border) 68%, transparent 32%) !important;
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--pv-surface-glow) 34%, transparent), transparent 58%),
+        var(--pv-topbar-btn-bg) !important;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, var(--pv-text) 10%, transparent 90%);
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.pv-brand-btn .q-btn__content {
+    color: var(--pv-text) !important;
+}
+
+.pv-brand-btn .q-btn__content > div {
+    font-weight: 700 !important;
+    letter-spacing: 0.2px;
+    background: linear-gradient(120deg,
+        color-mix(in srgb, var(--pv-accent) 85%, white 15%),
+        color-mix(in srgb, var(--q-info) 55%, var(--pv-accent) 45%));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 10px color-mix(in srgb, var(--pv-accent) 24%, transparent 76%);
+}
+
+.pv-brand-btn:hover .q-btn__wrapper {
+    border-color: color-mix(in srgb, var(--pv-border-hover) 84%, transparent 16%) !important;
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--pv-surface-glow) 46%, transparent), transparent 52%),
+        var(--pv-topbar-btn-hover) !important;
+    transform: translateY(-1px);
+}
+
+.pv-brand-btn:hover .q-btn__content > div {
+    text-shadow: 0 0 14px color-mix(in srgb, var(--pv-accent) 34%, transparent 66%);
+}
+
+.pv-topbar-btn .q-btn__wrapper {
+    border-radius: var(--pv-radius-sm) !important;
+    background: var(--pv-topbar-btn-bg) !important;
+    color: var(--pv-text) !important;
+    border: 1px solid color-mix(in srgb, var(--pv-border) 72%, transparent 28%) !important;
+    box-shadow: none;
+    transition: background 140ms ease, border-color 140ms ease;
+}
+
+.pv-topbar-btn .q-icon,
+.pv-topbar-btn .q-btn__content {
+    color: var(--pv-text) !important;
+}
+
+.pv-topbar-btn:hover .q-btn__wrapper {
+    background: var(--pv-topbar-btn-hover) !important;
+    border-color: color-mix(in srgb, var(--pv-border-hover) 82%, transparent 18%) !important;
+}
+
+/* ------------------------------------------------------------------
+   5. Dashboard stats
+   ------------------------------------------------------------------ */
+
+.pv-stats-row {
+    flex-wrap: wrap;
+}
+
+.pv-stat {
+    padding: 18px 22px;
+    flex: 1 1 200px;
+    min-width: 200px;
+    background:
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        var(--pv-bg-card);
+    border: 1px solid var(--pv-border);
+    border-radius: 16px;
+    transition: transform 220ms cubic-bezier(.4, 0, .2, 1),
+        border-color 220ms ease,
+        box-shadow 220ms ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.pv-stat::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    transition: opacity 280ms ease;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.pv-stat:hover {
+    transform: translateY(-2px);
+    border-color: var(--pv-bg-card-hover-border);
+}
+
+.pv-stat:hover::before {
+    opacity: 1;
+}
+
+/* Per-color subtle gradient on hover */
+.pv-stat--blue:hover::before {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+}
+
+.pv-stat--red:hover::before {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, transparent 60%);
+}
+
+.pv-stat--orange:hover::before {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, transparent 60%);
+}
+
+.pv-stat--green:hover::before {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, transparent 60%);
+}
+
+.pv-stat>* {
+    position: relative;
+    z-index: 1;
+}
+
+.pv-stat-label {
+    font-size: 11px;
+    color: var(--pv-text-dimmer);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 500;
+}
+
+.pv-stat-value {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+}
+
+.pv-stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 220ms ease;
+}
+
+.pv-stat:hover .pv-stat-icon {
+    transform: scale(1.08);
+}
+
+.pv-stat-icon-blue {
+    background: var(--pv-stat-blue-bg);
+    color: var(--pv-stat-blue-fg);
+}
+
+.pv-stat-icon-red {
+    background: var(--pv-stat-red-bg);
+    color: var(--pv-stat-red-fg);
+}
+
+.pv-stat-icon-orange {
+    background: var(--pv-stat-orange-bg);
+    color: var(--pv-stat-orange-fg);
+}
+
+.pv-stat-icon-green {
+    background: var(--pv-stat-green-bg);
+    color: var(--pv-stat-green-fg);
+}
+
+@media (max-width: 768px) {
+    .pv-stat {
+        flex: 1 1 calc(50% - 12px);
+        min-width: 140px;
+        padding: 12px 14px;
+    }
+
+    .pv-stat-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .pv-stat-value {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pv-stat {
+        min-width: 120px;
+        padding: 10px 12px;
+    }
+
+    .pv-stat-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .pv-stat-value {
+        font-size: 20px;
+    }
+
+    .pv-stat-label {
+        font-size: 10px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   6. Poster tiles — responsive sizing
+   ------------------------------------------------------------------ */
+
+.pv-poster {
+    position: relative;
+    --pv-poster-footer-h: 28px;
+    --pv-poster-ratio: 1.4117647;
+    --pv-poster-row-w: clamp(132px, 10.8vw, 170px);
+    width: var(--pv-poster-row-w);
+    height: calc(var(--pv-poster-row-w) * var(--pv-poster-ratio));
+    border-radius: 10px;
+    overflow: hidden;
+    contain: layout paint style;
+    flex: 0 0 auto;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    border: 1px solid color-mix(in srgb, var(--pv-border) 35%, transparent 65%);
+    background-clip: padding-box;
+    outline: 1px solid transparent;
+    transition: transform 220ms cubic-bezier(.4, 0, .2, 1),
+        box-shadow 220ms ease,
+        border-color 220ms ease;
+}
+
+.pv-poster:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.30);
+    border-color: color-mix(in srgb, var(--pv-bg-card-hover-border) 70%, transparent 30%);
+}
+
+/* High-DPI tuning: keep full-pixel borders and stabilize rounded image compositing. */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
+    .pv-poster {
+        border-width: 1px;
+        border-color: color-mix(in srgb, var(--pv-border) 30%, transparent 70%);
+        box-shadow: 0 2px 7px rgba(0, 0, 0, 0.16);
+    }
+
+    .pv-dashboard-section {
+        border-color: color-mix(in srgb, var(--pv-border) 52%, transparent 48%);
+    }
+}
+
+.pv-poster-thumb {
+    width: 100%;
+    height: 100%;
+    background: color-mix(in srgb, var(--pv-bg) 90%, black 10%);
+    border-radius: inherit;
+    overflow: hidden;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+.pv-poster-thumb .q-img,
+.pv-poster-thumb .q-img__container,
+.pv-poster-thumb .q-img__content,
+.pv-poster-thumb .q-img__image {
+    border-radius: inherit;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+.pv-poster-thumb .q-img__image {
+    will-change: opacity;
+}
+
+/* Row poster sizing by viewport */
+@media (max-width: 900px) {
+    .pv-poster {
+        --pv-poster-row-w: clamp(128px, 18vw, 164px);
+    }
+}
+
+@media (max-width: 600px) {
+    .pv-poster {
+        --pv-poster-row-w: clamp(116px, 39vw, 150px);
+    }
+}
+
+/* ------------------------------------------------------------------
+   7. Poster grid (wrapped wall)
+   ------------------------------------------------------------------ */
+
+.pv-poster-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(136px, 170px));
+    gap: 14px;
+    align-content: start;
+    justify-content: center;
+}
+
+.pv-poster-grid .pv-poster {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 17 / 24;
+    content-visibility: auto;
+    contain-intrinsic-size: 160px 226px;
+}
+
+@media (min-width: 768px) {
+    .pv-poster-grid {
+        justify-content: start;
+    }
+}
+
+@media (max-width: 600px) {
+    .pv-poster-grid {
+        /* Mobile portrait: keep posters readable (3 per row). */
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+    /* Inside the grid, posters must fill their cell. 
+       We use a fixed calc() height instead of aspect-ratio to prevent extreme 
+       scroll lag during rapid render/intersection in Quasar. */
+    .pv-poster-grid .pv-poster {
+        width: 100%;
+        height: calc((100vw - 36px) * 0.470588);
+    }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+    .pv-poster-grid {
+        grid-template-columns: repeat(auto-fill, minmax(128px, 154px));
+    }
+}
+
+/* Portrait mobile: reduce expensive effects for smoother vertical scrolling */
+@media (max-width: 600px) and (orientation: portrait) {
+    .pv-poster {
+        transition: none;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+    }
+
+    .pv-poster:hover {
+        transform: none;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+    }
+
+    .pv-poster-overlay,
+    .pv-poster-progress-fill,
+    .pv-poster-corner {
+        transition: none;
+    }
+
+    .pv-poster-footer {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+}
+
+/* Horizontal marker rows (Plex-style) */
+.pv-marker-row {
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    scroll-behavior: smooth;
+    width: 100%;
+    max-width: 100%;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    -webkit-mask-image: linear-gradient(to right,
+        transparent 0,
+        rgba(0, 0, 0, 0.10) 8px,
+        black 20px,
+        black calc(100% - 20px),
+        rgba(0, 0, 0, 0.10) calc(100% - 8px),
+        transparent 100%);
+    mask-image: linear-gradient(to right,
+        transparent 0,
+        rgba(0, 0, 0, 0.10) 8px,
+        black 20px,
+        black calc(100% - 20px),
+        rgba(0, 0, 0, 0.10) calc(100% - 8px),
+        transparent 100%);
+}
+
+@media (max-width: 768px) {
+    .pv-marker-row {
+        -webkit-mask-image: linear-gradient(to right,
+            transparent 0,
+            rgba(0, 0, 0, 0.22) 10px,
+            black 26px,
+            black calc(100% - 26px),
+            rgba(0, 0, 0, 0.22) calc(100% - 10px),
+            transparent 100%);
+        mask-image: linear-gradient(to right,
+            transparent 0,
+            rgba(0, 0, 0, 0.22) 10px,
+            black 26px,
+            black calc(100% - 26px),
+            rgba(0, 0, 0, 0.22) calc(100% - 10px),
+            transparent 100%);
+    }
+}
+
+.pv-marker-row::-webkit-scrollbar {
+    display: none;
+}
+
+.pv-marker-row {
+    scrollbar-width: none;
+}
+
+@media (max-width: 600px) {
+    .pv-marker-row {
+        gap: 10px !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   7b. Dashboard sections
+   ------------------------------------------------------------------ */
+
+.pv-dashboard-shell {
+    gap: 10px;
+}
+
+.pv-dashboard-section {
+    border: 1px solid color-mix(in srgb, var(--pv-border) 58%, transparent 42%);
+    border-radius: var(--pv-radius-md);
+    background:
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        color-mix(in srgb, var(--pv-bg-card) 92%, transparent 8%);
+    box-shadow: var(--pv-shadow-sm);
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: visible;
+    background-clip: padding-box;
+}
+
+.pv-dashboard-section-head {
+    border-bottom: 1px solid color-mix(in srgb, var(--pv-border) 55%, transparent 45%);
+}
+
+@media (max-width: 768px) {
+    .pv-dashboard-shell {
+        gap: 8px;
+    }
+
+    .pv-dashboard-section {
+        border-radius: 10px;
+    }
+}
+
+/* ------------------------------------------------------------------
+   8. Poster overlay, footer, progress, corners
+   ------------------------------------------------------------------ */
+
+.pv-poster-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--pv-poster-footer-h) - 4px);
+    height: 3px;
+    background: rgba(255, 255, 255, 0.10);
+    box-shadow: none;
+    border: none;
+}
+
+.pv-poster-progress-fill {
+    height: 100%;
+    background: var(--pv-accent);
+    width: 0%;
+    box-shadow: 0 0 6px var(--pv-accent-75);
+    border-radius: 0 2px 2px 0;
+    transition: width 400ms ease;
+}
+
+.pv-poster-corner {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    display: inline-flex;
+    gap: 2px;
+    z-index: 10;
+    opacity: 0.82;
+    transition: opacity 120ms ease-in-out;
+}
+
+.pv-poster:hover .pv-poster-corner {
+    opacity: 1;
+}
+
+.pv-poster:not(:hover) .pv-poster-corner .pv-inactive {
+    display: none !important;
+}
+
+.pv-poster:not(:hover) .pv-poster-corner .pv-hover-only {
+    display: none !important;
+}
+
+.pv-poster-corner .pv-active .material-icons {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.pv-poster-corner .pv-corner-btn--completed.pv-active .q-icon {
+    color: var(--q-positive) !important;
+}
+
+.pv-poster-corner .pv-corner-btn--favorite.pv-active .q-icon {
+    color: var(--q-negative) !important;
+}
+
+.pv-poster-corner .pv-corner-btn--to-read.pv-active .q-icon {
+    color: var(--q-warning) !important;
+}
+
+.pv-poster-corner .pv-corner-btn--share .q-icon {
+    color: var(--q-info) !important;
+}
+
+.pv-poster-corner .pv-corner-btn--inactive .q-icon {
+    color: var(--pv-text-dimmer) !important;
+}
+
+.pv-poster-corner .q-btn__wrapper {
+    width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    border-radius: 4px !important;
+    background: var(--pv-corner-bg) !important;
+    border: 1px solid var(--pv-corner-border) !important;
+}
+
+.pv-poster-corner .q-icon {
+    font-size: 18px !important;
+}
+
+.pv-poster-corner .q-btn {
+    transform: translateZ(0);
+    transition: transform 150ms ease;
+}
+
+.pv-poster-corner .q-btn:hover {
+    transform: scale(1.08);
+}
+
+.pv-poster-corner .q-btn:hover .q-btn__wrapper,
+.pv-poster-corner .q-btn:focus-visible .q-btn__wrapper {
+    background: color-mix(in srgb, var(--pv-bg) 88%, black 12%) !important;
+    border-color: color-mix(in srgb, var(--pv-text) 48%, transparent 52%) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.pv-poster-corner .pv-corner-btn--completed:hover .q-icon,
+.pv-poster-corner .pv-corner-btn--completed:focus-visible .q-icon {
+    color: var(--q-positive) !important;
+}
+
+.pv-poster-corner .pv-corner-btn--favorite:hover .q-icon,
+.pv-poster-corner .pv-corner-btn--favorite:focus-visible .q-icon {
+    color: var(--q-negative) !important;
+}
+
+.pv-poster-corner .pv-corner-btn--to-read:hover .q-icon,
+.pv-poster-corner .pv-corner-btn--to-read:focus-visible .q-icon {
+    color: var(--q-warning) !important;
+}
+
+.pv-poster-corner .pv-corner-btn--share:hover .q-icon,
+.pv-poster-corner .pv-corner-btn--share:focus-visible .q-icon {
+    color: var(--q-info) !important;
+}
+
+.pv-poster-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--pv-poster-footer-h);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.28));
+    backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 10px;
+}
+
+.pv-poster-title {
+    font-size: 11.6px;
+    font-weight: 550;
+    color: var(--pv-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.pv-poster-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.20) 0%, rgba(0, 0, 0, 0.52) 100%);
+    opacity: 0;
+    transition: opacity 200ms cubic-bezier(.4, 0, .2, 1);
+    pointer-events: none;
+    z-index: 4;
+}
+
+.pv-poster:hover .pv-poster-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.pv-poster-overlay-actions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 6;
+    pointer-events: auto;
+}
+
+.pv-fab {
+    width: 48px;
+    height: 48px;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+    border-radius: 999px !important;
+    background: color-mix(in srgb, var(--pv-bg) 76%, black 24%) !important;
+    border: 1px solid color-mix(in srgb, var(--pv-text) 24%, transparent 76%) !important;
+    backdrop-filter: blur(5px);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+    transition: background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease;
+}
+
+.pv-fab .q-btn__content {
+    color: var(--pv-text) !important;
+}
+
+.pv-fab .material-icons,
+.pv-fab .q-icon {
+    font-size: 24px !important;
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+.pv-fab:hover,
+.pv-fab:focus-visible {
+    background: color-mix(in srgb, var(--pv-bg) 90%, black 10%) !important;
+    border-color: color-mix(in srgb, var(--pv-text) 50%, transparent 50%) !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+    transform: scale(1.06);
+}
+
+.pv-fab:hover .q-icon,
+.pv-fab:focus-visible .q-icon {
+    filter: brightness(1.15);
+}
+
+.pv-fab--metadata .q-icon {
+    color: var(--q-info) !important;
+}
+
+.pv-fab--read .q-icon {
+    color: var(--q-warning) !important;
+}
+
+.pv-poster-overlay-bottom {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 50%;
+    z-index: 5;
+}
+
+/* Touch/coarse pointers: reduce paint/compositing costs for smoother scrolling. */
+@media (hover: none), (pointer: coarse) {
+    .pv-poster .pv-poster-corner {
+        opacity: 1;
+    }
+
+    .pv-poster .pv-poster-corner .pv-inactive,
+    .pv-poster .pv-poster-corner .pv-hover-only {
+        display: inline-flex !important;
+    }
+
+    .pv-poster {
+        transition: none;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+    }
+
+    .pv-poster:hover {
+        transform: none;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+    }
+
+    .pv-poster-thumb,
+    .pv-poster-thumb .q-img,
+    .pv-poster-thumb .q-img__container,
+    .pv-poster-thumb .q-img__content,
+    .pv-poster-thumb .q-img__image {
+        transform: none;
+        backface-visibility: visible;
+    }
+
+    .pv-poster-thumb .q-img__image {
+        will-change: auto;
+    }
+
+    .pv-poster-overlay,
+    .pv-poster-progress-fill,
+    .pv-poster-corner,
+    .pv-poster-corner .q-btn,
+    .pv-fab {
+        transition: none;
+    }
+
+    .pv-poster-progress-fill {
+        box-shadow: none;
+    }
+
+    .pv-poster-footer,
+    .pv-fab {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .pv-marker-row {
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+}
+
+/* ------------------------------------------------------------------
+   9. Search input pair
+   ------------------------------------------------------------------ */
+
+.pv-search-pair {
+    display: flex;
+    align-items: center;
+    gap: 0 !important;
+    width: 100%;
+    max-width: 680px;
+    margin-left: auto;
+    border: 1px solid color-mix(in srgb, var(--pv-search-shell-border) 72%, transparent 28%);
+    border-radius: 10px;
+    background: var(--pv-search-shell-bg);
+    min-height: 40px;
+    box-shadow: none;
+    overflow: hidden;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.pv-search-pair:focus-within {
+    border-color: color-mix(in srgb, var(--pv-accent) 42%, var(--pv-search-shell-border));
+    box-shadow: 0 0 0 2px var(--pv-search-focus-ring);
+}
+
+.pv-search-filter {
+    margin-left: 0;
+}
+
+.pv-search-input .q-field__control {
+    border-radius: 9px 0 0 9px !important;
+    background: transparent !important;
+    border: 0 !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    box-shadow: none !important;
+}
+
+.pv-search-filter .q-field__control {
+    border-radius: 0 9px 9px 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    box-shadow: none !important;
+}
+
+.pv-search-input .q-field__control::before,
+.pv-search-input .q-field__control::after,
+.pv-search-filter .q-field__control::before,
+.pv-search-filter .q-field__control::after {
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    content: none !important;
+}
+
+.pv-search-input .q-field__native,
+.pv-search-filter .q-field__native {
+    color: var(--pv-text) !important;
+    font-weight: 500;
+}
+
+.pv-search-input .q-field__native::placeholder {
+    color: var(--pv-text-dimmer) !important;
+}
+
+/* ------------------------------------------------------------------
+   9b. List wall cards
+   ------------------------------------------------------------------ */
+
+.pv-list-grid {
+    gap: var(--pv-space-2) !important;
+}
+
+.pv-list-row {
+    width: 100%;
+    align-items: stretch;
+    justify-content: flex-start;
+    margin-bottom: var(--pv-space-2);
+    border-radius: var(--pv-radius-md);
+    background:
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        var(--pv-bg-card);
+    border: 1px solid var(--pv-border);
+    box-shadow: var(--pv-shadow-sm);
+    overflow: hidden;
+    position: relative;
+    min-height: 96px;
+    transition: transform 200ms cubic-bezier(.4, 0, .2, 1), border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.pv-list-row:hover {
+    transform: translateY(-1px);
+    border-color: var(--pv-bg-card-hover-border);
+    box-shadow: var(--pv-shadow-md);
+}
+
+.pv-list-row--selected {
+    outline: 2px solid var(--pv-accent);
+    outline-offset: -2px;
+}
+
+.pv-list-cover {
+    flex-shrink: 0;
+    width: 64px;
+    min-height: 72px;
+    background: var(--pv-list-cover-bg);
+    border-right: 1px solid var(--pv-list-cover-border);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+@media (min-width: 640px) {
+    .pv-list-cover {
+        width: 80px;
+    }
+}
+
+.pv-list-actions {
+    opacity: 1;
+    transition: opacity 200ms ease;
+}
+
+.pv-list-text-col {
+    min-height: 64px;
+}
+
+.pv-list-meta-row {
+    margin-top: 1px;
+    align-items: center;
+    line-height: 1;
+}
+
+.pv-list-meta-icon {
+    font-size: 12px;
+    flex: 0 0 auto;
+    color: var(--pv-text-dimmer);
+    opacity: 0.95;
+}
+
+.pv-list-author-text {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+.pv-list-subtitle {
+    line-height: 1.2;
+}
+
+.pv-list-tag-row {
+    margin-top: 2px;
+    flex-wrap: nowrap;
+    gap: 5px;
+    overflow: hidden;
+}
+
+.pv-list-tag-chip {
+    font-size: 11px;
+    line-height: 1.1;
+    font-weight: 500;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--pv-chip-bg) 86%, transparent 14%);
+    opacity: 0.95;
+}
+
+.pv-list-format-chip {
+    background: color-mix(in srgb, var(--pv-accent-20) 65%, var(--pv-chip-bg) 35%);
+    border-color: color-mix(in srgb, var(--pv-accent) 45%, var(--pv-chip-border) 55%);
+    color: var(--pv-text);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.pv-list-tag-chip .q-badge__content {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pv-list-tag-chip--fallback {
+    opacity: 0.65;
+}
+
+.pv-list-tag-chip--v1 {
+    background: color-mix(in srgb, var(--pv-stat-blue-bg) 74%, var(--pv-chip-bg) 26%);
+    border-color: color-mix(in srgb, var(--pv-stat-blue-fg) 36%, var(--pv-chip-border) 64%);
+    color: var(--pv-text);
+}
+
+.pv-list-tag-chip--v2 {
+    background: color-mix(in srgb, var(--pv-stat-green-bg) 74%, var(--pv-chip-bg) 26%);
+    border-color: color-mix(in srgb, var(--pv-stat-green-fg) 36%, var(--pv-chip-border) 64%);
+    color: var(--pv-text);
+}
+
+.pv-list-tag-chip--v3 {
+    background: color-mix(in srgb, var(--pv-stat-orange-bg) 74%, var(--pv-chip-bg) 26%);
+    border-color: color-mix(in srgb, var(--pv-stat-orange-fg) 36%, var(--pv-chip-border) 64%);
+    color: var(--pv-text);
+}
+
+.pv-list-tag-chip--v4 {
+    background: color-mix(in srgb, var(--pv-stat-red-bg) 74%, var(--pv-chip-bg) 26%);
+    border-color: color-mix(in srgb, var(--pv-stat-red-fg) 36%, var(--pv-chip-border) 64%);
+    color: var(--pv-text);
+}
+
+@media (max-width: 639px) {
+    .pv-list-row {
+        min-height: 88px;
+        border-radius: 10px;
+    }
+
+    .pv-list-cover {
+        width: 56px;
+        min-height: 88px;
+    }
+
+    .pv-list-text-col {
+        min-height: 56px;
+    }
+
+    .pv-list-meta-row {
+        margin-top: 0;
+    }
+
+    .pv-list-tag-row {
+        margin-top: 1px;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .pv-list-tag-chip .q-badge__content {
+        max-width: 104px;
+    }
+
+    .pv-list-actions {
+        margin-top: 2px;
+        gap: 2px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .pv-list-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    .pv-list-action-btn {
+        min-width: 30px !important;
+        min-height: 30px !important;
+    }
+}
+
+@media (max-width: 375px) {
+    .pv-list-tag-chip .q-badge__content {
+        max-width: 84px;
+    }
+
+    .pv-list-actions {
+        gap: 1px;
+    }
+
+    .pv-list-action-btn {
+        min-width: 28px !important;
+        min-height: 28px !important;
+    }
+
+    .pv-list-action-btn--share {
+        display: none !important;
+    }
+}
+
+.pv-list-action-btn .q-icon {
+    transition: transform 140ms ease;
+}
+
+.pv-list-action-btn:hover .q-icon {
+    transform: scale(1.1);
+}
+
+@media (min-width: 1024px) {
+    .pv-list-actions {
+        opacity: 0;
+    }
+
+    .pv-list-row:hover .pv-list-actions {
+        opacity: 1;
+    }
+}
+
+.pv-list-progress-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: color-mix(in srgb, var(--pv-text) 12%, transparent 88%);
+    overflow: hidden;
+}
+
+.pv-list-progress-fill {
+    height: 100%;
+    background: var(--pv-accent);
+    box-shadow: 0 0 6px var(--pv-accent-75);
+}
+
+@supports (color: color-mix(in srgb, #000 50%, #fff 50%)) {
+    .pv-search-filter .q-field__control {
+        background: transparent !important;
+    }
+}
+
+.pv-search-filter .q-field__native {
+    font-size: 12px;
+    color: var(--pv-text) !important;
+    min-height: 38px !important;
+    height: 38px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    align-items: center !important;
+}
+
+.pv-search-filter .q-select__dropdown-icon {
+    align-self: center !important;
+}
+
+/* Login inputs: keep neutral border/focus colors (avoid bright accent on active field) */
+.pv-login-input .q-field__control {
+    border-color: var(--pv-border) !important;
+    background: var(--pv-bg-surface) !important;
+}
+
+.pv-login-input.q-field--focused .q-field__control,
+.pv-login-input.q-field--highlighted .q-field__control {
+    border-color: var(--pv-border-hover) !important;
+    box-shadow: none !important;
+}
+
+.pv-login-input input,
+.pv-login-input .q-field__native {
+    color: var(--pv-text) !important;
+}
+
+.pv-login-input input:-webkit-autofill,
+.pv-login-input input:-webkit-autofill:hover,
+.pv-login-input input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--pv-text) !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--pv-bg-surface) inset !important;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+/* ------------------------------------------------------------------
+   10. Sidebar nav buttons
+   ------------------------------------------------------------------ */
+
+.pv-nav-btn .q-btn__wrapper,
+.pv-nav-btn.q-btn--dense .q-btn__wrapper {
+    border-radius: 8px !important;
+    min-height: 42px !important;
+    padding: 1px 10px !important;
+    border: 1px solid transparent !important;
+    transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.pv-nav-btn .q-btn__content {
+    color: var(--pv-text) !important;
+}
+
+.pv-nav-btn:hover .q-btn__wrapper {
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--pv-surface-glow) 40%, transparent), transparent 55%),
+        var(--pv-nav-hover) !important;
+    border-color: color-mix(in srgb, var(--pv-border) 76%, transparent 24%) !important;
+}
+
+.pv-nav-btn--active .q-btn__wrapper {
+    background:
+        linear-gradient(135deg, color-mix(in srgb, var(--pv-accent) 16%, transparent), transparent 58%),
+        var(--pv-nav-active-bg) !important;
+    position: relative;
+    border-radius: 0 8px 8px 0 !important;
+    border-color: color-mix(in srgb, var(--pv-accent) 28%, transparent) !important;
+    box-shadow: none;
+}
+
+.pv-nav-btn--active .q-btn__wrapper::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    bottom: 4px;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    background: var(--pv-nav-active-border);
+}
+
+.pv-nav-btn--active .q-btn__content {
+    color: var(--pv-text) !important;
+    font-weight: 500;
+}
+
+.pv-nav-btn--active:hover .q-btn__wrapper {
+    background:
+    linear-gradient(135deg, color-mix(in srgb, var(--pv-accent) 20%, transparent), transparent 56%),
+        var(--pv-nav-active-hover) !important;
+}
+
+.pv-nav-icon {
+    font-size: 18px !important;
+    width: 22px;
+    text-align: center;
+}
+
+/* Section headers */
+.pv-nav-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 10px;
+    min-height: 36px;
+    width: 100%;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--pv-bg-surface) 44%, transparent 56%);
+}
+
+.pv-nav-section-toggle {
+    padding: 3px 6px !important;
+    min-height: 30px !important;
+}
+
+.pv-nav-section-toggle .q-btn__wrapper {
+    min-height: 30px !important;
+    padding: 0 2px !important;
+}
+
+.pv-nav-section-toggle .q-btn__content {
+    gap: 4px;
+    color: var(--pv-text-dimmer) !important;
+}
+
+.pv-nav-section-label {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--pv-text-dimmer);
+    line-height: 1.1;
+}
+
+/* Section action buttons (+ / menu) */
+.pv-nav-add-btn .q-btn__wrapper,
+.pv-nav-menu-btn .q-btn__wrapper {
+    border-radius: var(--pv-radius-sm) !important;
+    background: var(--pv-topbar-btn-bg) !important;
+    border: 1px solid transparent !important;
+    color: var(--pv-text) !important;
+    min-height: 30px !important;
+    min-width: 30px !important;
+    width: 30px !important;
+    height: 30px !important;
+    padding: 0 !important;
+    transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease !important;
+}
+
+.pv-nav-add-btn,
+.pv-nav-menu-btn {
+    border-radius: var(--pv-radius-sm) !important;
+    transition: background-color 140ms ease, box-shadow 140ms ease !important;
+}
+
+.pv-nav-add-btn:hover .q-btn__wrapper,
+.pv-nav-menu-btn:hover .q-btn__wrapper {
+    background: var(--pv-topbar-btn-hover) !important;
+    border-color: var(--pv-border-hover) !important;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--pv-accent) 30%, transparent) !important;
+    transform: translateY(-1px);
+}
+
+.pv-nav-add-btn:hover,
+.pv-nav-menu-btn:hover {
+    background: color-mix(in srgb, var(--pv-topbar-btn-hover) 88%, transparent 12%) !important;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pv-border-hover) 86%, transparent 14%) !important;
+}
+
+.pv-nav-add-btn:hover .q-icon,
+.pv-nav-menu-btn:hover .q-icon {
+    color: var(--pv-accent) !important;
+}
+
+.pv-nav-add-btn:active .q-btn__wrapper,
+.pv-nav-add-btn.q-btn--active .q-btn__wrapper,
+.pv-nav-menu-btn:active .q-btn__wrapper,
+.pv-nav-menu-btn.q-btn--active .q-btn__wrapper,
+.pv-nav-add-btn.q-focusable:focus .q-btn__wrapper,
+.pv-nav-menu-btn.q-focusable:focus .q-btn__wrapper {
+    background: var(--pv-topbar-btn-hover) !important;
+    border-color: var(--pv-border-hover) !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+.pv-nav-add-btn .q-focus-helper,
+.pv-nav-menu-btn .q-focus-helper,
+.pv-nav-add-btn .q-ripple,
+.pv-nav-menu-btn .q-ripple {
+    opacity: 0 !important;
+    background: transparent !important;
+}
+
+.pv-nav-chip-btn .q-btn__wrapper {
+    border-radius: 8px !important;
+    min-height: 22px !important;
+    padding: 0 8px !important;
+}
+
+.pv-nav-section-divider {
+    height: 1px;
+    background: var(--pv-border);
+    margin: 4px 4px;
+    opacity: 0.5;
+}
+
+/* Drawer headers + mobile close button */
+.pv-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 12px 0;
+    width: 100%;
+    margin-bottom: 6px;
+}
+
+.pv-filters-drawer-header {
+    padding: 12px 16px 0;
+}
+
+.pv-drawer-close {
+    display: none;
+}
+
+@media (max-width: 900px) {
+    .pv-drawer-close {
+        display: inline-flex;
+    }
+}
+
+/* ------------------------------------------------------------------
+   11. Sidebar library / marker rows
+   ------------------------------------------------------------------ */
+
+/* Wrapper — same visual behavior as nav buttons */
+.pv-lib-row {
+    position: relative;
+}
+
+/* Dots menu — absolute overlay on the right, hidden by default */
+.pv-lib-row .pv-lib-menu {
+    position: absolute;
+    right: 0px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease-in-out;
+    z-index: 1;
+}
+
+/* Badge inside the button — visible by default */
+.pv-lib-row .pv-lib-count {
+    transition: opacity 120ms ease-in-out;
+}
+
+/* Hover: show dots, hide badge */
+.pv-lib-row:hover .pv-lib-count {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pv-lib-row:hover .pv-lib-menu {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* No-menu variant: keep badge visible on hover */
+.pv-lib-row.pv-no-menu:hover .pv-lib-count {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+.pv-action-dots .q-btn__wrapper {
+    border-radius: 8px !important;
+    width: 24px !important;
+    height: 24px !important;
+    min-height: 24px !important;
+    min-width: 24px !important;
+    padding: 0 !important;
+}
+
+/* ------------------------------------------------------------------
+   12. Menus / popups — flat, no shadows
+   ------------------------------------------------------------------ */
+
+.pv-no-shadow,
+.pv-no-shadow.q-menu,
+.pv-no-shadow .q-menu,
+.pv-no-shadow.q-menu__content,
+.pv-no-shadow .q-menu__content,
+.pv-no-shadow .q-virtual-scroll__content,
+.pv-no-shadow .q-list,
+.pv-no-shadow .q-item {
+    box-shadow: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+
+.pv-menu,
+.pv-menu.q-menu__content,
+.pv-menu .q-menu__content {
+    background: var(--pv-menu-bg) !important;
+    border: 1px solid var(--pv-menu-border) !important;
+    border-radius: 10px !important;
+    backdrop-filter: none !important;
+}
+
+@supports (color: color-mix(in srgb, #000 50%, #fff 50%)) {
+
+    .pv-menu,
+    .pv-menu.q-menu__content,
+    .pv-menu .q-menu__content {
+        background: color-mix(in srgb, var(--pv-bg) 84%, var(--pv-text) 16%) !important;
+    }
+}
+
+.pv-menu .q-list {
+    padding: 4px 0 !important;
+}
+
+.pv-menu .q-item {
+    min-height: 32px !important;
+    padding: 6px 12px !important;
+}
+
+.pv-menu .q-item__label {
+    font-size: 12px !important;
+}
+
+.pv-menu .q-item:hover {
+    background: var(--pv-menu-item-hover) !important;
+}
+
+.pv-menu-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    cursor: pointer;
+}
+
+.pv-menu-row:hover {
+    background: var(--pv-menu-item-hover);
+}
+
+/* Global: flat dropdown menus */
+.q-menu,
+.q-menu__content,
+.q-popup-proxy,
+.q-popup-proxy__anchor,
+.q-popup-proxy__content {
+    box-shadow: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+
+.q-menu__content {
+    background: var(--pv-menu-bg) !important;
+    border: 1px solid var(--pv-border-hover) !important;
+    border-radius: 10px !important;
+    backdrop-filter: none !important;
+}
+
+@supports (color: color-mix(in srgb, #000 50%, #fff 50%)) {
+    .q-menu__content {
+        background: color-mix(in srgb, var(--pv-bg) 84%, var(--pv-text) 16%) !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   13. Icon picker
+   ------------------------------------------------------------------ */
+
+.pv-icon-grid {
+    max-height: 170px;
+    overflow: auto;
+    padding: 6px 2px;
+}
+
+.pv-icon-btn .q-btn__wrapper {
+    border-radius: 10px !important;
+    background: var(--pv-bg-surface) !important;
+    border: 1px solid var(--pv-border) !important;
+}
+
+.pv-icon-btn:hover .q-btn__wrapper {
+    border-color: var(--pv-bg-card-hover-border) !important;
+}
+
+.pv-icon-btn--active .q-btn__wrapper {
+    border-color: var(--pv-accent-75) !important;
+}
+
+/* ------------------------------------------------------------------
+   13b. Auto marker dialog
+   ------------------------------------------------------------------ */
+
+.pv-auto-marker-dialog {
+    max-height: min(88vh, 980px);
+    overflow: auto;
+}
+
+.pv-auto-marker-section {
+    border-color: var(--pv-border) !important;
+    padding: 10px;
+}
+
+.pv-auto-marker-group {
+    border-color: var(--pv-border) !important;
+    padding: 8px;
+}
+
+.pv-auto-marker-group-nested {
+    margin-left: 14px;
+    border-left: 2px solid var(--pv-border) !important;
+}
+
+.pv-auto-marker-group-header {
+    padding-bottom: 4px;
+    border-bottom: 1px dashed var(--pv-border);
+    margin-bottom: 6px;
+}
+
+.pv-auto-marker-rule {
+    border-color: var(--pv-border) !important;
+    background: var(--pv-bg-surface) !important;
+    padding: 6px;
+}
+
+.pv-auto-marker-rule .q-field__control,
+.pv-auto-marker-group .q-field__control {
+    min-height: 36px !important;
+}
+
+.pv-auto-marker-field {
+    min-width: 150px;
+    width: 150px;
+}
+
+.pv-auto-marker-operator {
+    min-width: 170px;
+    width: 170px;
+}
+
+.pv-auto-marker-empty {
+    padding: 4px 2px 0;
+}
+
+.pv-auto-marker-inline-icon {
+    width: min(100%, 460px);
+    min-width: 220px;
+}
+
+.pv-auto-marker-inline-icon .pv-icon-grid {
+    max-height: 130px;
+}
+
+.pv-auto-marker-inline-icon .q-field__label {
+    font-size: 12px;
+}
+
+.pv-icon-trigger-btn {
+    width: 92px !important;
+    min-width: 92px !important;
+    flex: 0 0 92px !important;
+}
+
+.pv-icon-trigger-btn .q-btn__wrapper {
+    min-height: 40px !important;
+    height: 40px !important;
+    width: 100% !important;
+    min-width: 92px !important;
+    padding: 0 16px !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--pv-border) !important;
+    background: transparent !important;
+}
+
+.pv-icon-trigger-btn .q-icon {
+    font-size: 18px !important;
+}
+
+.pv-icon-trigger-btn:hover .q-btn__wrapper {
+    border-color: var(--pv-bg-card-hover-border) !important;
+}
+
+@media (max-width: 700px) {
+    .pv-auto-marker-group-nested {
+        margin-left: 6px;
+    }
+
+    .pv-auto-marker-field,
+    .pv-auto-marker-operator {
+        min-width: 120px;
+        width: 120px;
+    }
+
+    .pv-auto-marker-inline-icon {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+/* ------------------------------------------------------------------
+   14. Admin tabs
+   ------------------------------------------------------------------ */
+
+.pv-admin-tabs {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+}
+
+.pv-admin-tabs .q-tabs__content {
+    justify-content: flex-start !important;
+}
+
+.pv-admin-tabs .q-tab {
+    min-height: 28px !important;
+    padding: 0 8px !important;
+}
+
+.pv-admin-tabs .q-tab__label {
+    font-size: 11px !important;
+}
+
+.pv-admin-tabs .q-tab__icon {
+    font-size: 15px !important;
+    margin-right: 6px !important;
+}
+
+.pv-admin-tabs .q-tab--inactive {
+    opacity: 0.75;
+}
+
+.pv-admin-tabs .q-tab--active {
+    opacity: 1;
+}
+
+.pv-admin-tabs .q-tab__indicator {
+    background: var(--pv-accent-95) !important;
+    height: 2px !important;
+}
+
+.pv-admin-tabs .q-tab__content {
+    color: var(--pv-text) !important;
+}
+
+.pv-admin-tabs .q-tab--disabled {
+    opacity: 0.45 !important;
+}
+
+.pv-admin-tab-panels,
+.pv-admin-tab-panels .q-tab-panels,
+.pv-admin-tab-panels .q-panel-parent,
+.pv-admin-tab-panels .q-panel {
+    background: transparent !important;
+}
+
+.pv-profile-tab-panels,
+.pv-profile-tab-panels .q-tab-panels,
+.pv-profile-tab-panels .q-panel-parent,
+.pv-profile-tab-panels .q-panel {
+    background: transparent !important;
+}
+
+.pv-profile-hero {
+    border-radius: var(--pv-radius-md);
+    border: 1px solid var(--pv-border);
+    background:
+        radial-gradient(circle at top right, var(--pv-surface-glow), transparent 45%),
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        var(--pv-bg-card);
+    box-shadow: var(--pv-shadow-sm);
+}
+
+.pv-profile-hero-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--pv-accent-15);
+    border: 1px solid color-mix(in srgb, var(--pv-accent) 45%, transparent 55%);
+    color: var(--pv-accent);
+}
+
+.pv-profile-hero-icon .q-icon {
+    font-size: 18px;
+}
+
+.pv-profile-chip {
+    border-radius: 9999px;
+    border: 1px solid var(--pv-chip-border) !important;
+    background: color-mix(in srgb, var(--pv-chip-bg) 88%, transparent 12%) !important;
+    color: var(--pv-text-dim) !important;
+    font-weight: 600;
+    letter-spacing: 0.15px;
+}
+
+.pv-profile-chip.text-primary {
+    color: var(--pv-text-dim) !important;
+}
+
+.pv-profile-chip-total {
+    background: color-mix(in srgb, var(--pv-accent-20) 86%, transparent 14%) !important;
+    border-color: color-mix(in srgb, var(--pv-accent) 52%, transparent 48%) !important;
+    color: color-mix(in srgb, var(--pv-accent) 88%, var(--pv-text) 12%) !important;
+}
+
+.pv-profile-chip-total.text-primary {
+    color: color-mix(in srgb, var(--pv-accent) 88%, var(--pv-text) 12%) !important;
+}
+
+.pv-profile-chip-completed {
+    background: color-mix(in srgb, var(--pv-stat-green-bg) 88%, transparent 12%) !important;
+    border-color: color-mix(in srgb, var(--pv-stat-green-fg) 44%, transparent 56%) !important;
+    color: color-mix(in srgb, var(--pv-stat-green-fg) 86%, var(--pv-text) 14%) !important;
+}
+
+.pv-profile-chip-completed.text-primary {
+    color: color-mix(in srgb, var(--pv-stat-green-fg) 86%, var(--pv-text) 14%) !important;
+}
+
+.pv-profile-chip-favorites {
+    background: color-mix(in srgb, var(--pv-stat-red-bg) 88%, transparent 12%) !important;
+    border-color: color-mix(in srgb, var(--pv-stat-red-fg) 44%, transparent 56%) !important;
+    color: color-mix(in srgb, var(--pv-stat-red-fg) 86%, var(--pv-text) 14%) !important;
+}
+
+.pv-profile-chip-favorites.text-primary {
+    color: color-mix(in srgb, var(--pv-stat-red-fg) 86%, var(--pv-text) 14%) !important;
+}
+
+.pv-profile-chip-to-read {
+    background: color-mix(in srgb, var(--pv-stat-orange-bg) 88%, transparent 12%) !important;
+    border-color: color-mix(in srgb, var(--pv-stat-orange-fg) 44%, transparent 56%) !important;
+    color: color-mix(in srgb, var(--pv-stat-orange-fg) 86%, var(--pv-text) 14%) !important;
+}
+
+.pv-profile-chip-to-read.text-primary {
+    color: color-mix(in srgb, var(--pv-stat-orange-fg) 86%, var(--pv-text) 14%) !important;
+}
+
+.pv-profile-chip-libraries {
+    background: color-mix(in srgb, var(--pv-stat-blue-bg) 88%, transparent 12%) !important;
+    border-color: color-mix(in srgb, var(--pv-stat-blue-fg) 44%, transparent 56%) !important;
+    color: color-mix(in srgb, var(--pv-stat-blue-fg) 86%, var(--pv-text) 14%) !important;
+}
+
+.pv-profile-chip-libraries.text-primary {
+    color: color-mix(in srgb, var(--pv-stat-blue-fg) 86%, var(--pv-text) 14%) !important;
+}
+
+.pv-profile-chip-markers {
+    background: color-mix(in srgb, var(--q-secondary) 16%, transparent 84%) !important;
+    border-color: color-mix(in srgb, var(--q-secondary) 42%, transparent 58%) !important;
+    color: color-mix(in srgb, var(--q-secondary) 88%, var(--pv-text) 12%) !important;
+}
+
+.pv-profile-chip-markers.text-primary {
+    color: color-mix(in srgb, var(--q-secondary) 88%, var(--pv-text) 12%) !important;
+}
+
+.pv-admin-shell {
+    width: 100%;
+    gap: var(--pv-space-4);
+}
+
+.pv-section-card {
+    width: 100%;
+    border-radius: var(--pv-radius-md);
+    border: 1px solid var(--pv-border);
+    background:
+        radial-gradient(circle at top right, var(--pv-surface-glow), transparent 40%),
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        var(--pv-bg-card);
+}
+
+/* ------------------------------------------------------------------
+   15. Skeleton / loading animation
+   ------------------------------------------------------------------ */
+
+@keyframes pv-skeleton-pulse {
+    0% {
+        background-color: var(--pv-skeleton-from);
+    }
+
+    50% {
+        background-color: var(--pv-skeleton-to);
+    }
+
+    100% {
+        background-color: var(--pv-skeleton-from);
+    }
+}
+
+.pv-skeleton {
+    animation: pv-skeleton-pulse 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+.pv-spinner-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--pv-bg) 60%, transparent 40%);
+    pointer-events: none;
+}
+
+/* ------------------------------------------------------------------
+   16. Breadcrumbs
+   ------------------------------------------------------------------ */
+
+.pv-breadcrumbs {
+    font-size: 12px;
+    color: var(--pv-text-dimmer);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    border: 1px solid var(--pv-border);
+    border-radius: 999px;
+    background:
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        color-mix(in srgb, var(--pv-bg-surface) 85%, transparent 15%);
+    box-shadow: var(--pv-shadow-sm);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.pv-breadcrumbs a,
+.pv-breadcrumbs .pv-bc-link {
+    cursor: pointer;
+    color: var(--pv-text-dim);
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: var(--pv-radius-sm);
+    padding: 2px 6px;
+    transition: color 0.16s ease, background-color 0.16s ease;
+}
+
+.pv-breadcrumbs .pv-bc-trigger.q-btn {
+    min-height: 0;
+    padding: 0;
+    color: var(--pv-text-dim) !important;
+}
+
+.pv-breadcrumbs .pv-bc-trigger .q-btn__content {
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 600;
+    color: var(--pv-text-dim) !important;
+    padding: 2px 6px;
+}
+
+.pv-breadcrumbs a:hover,
+.pv-breadcrumbs .pv-bc-link:hover {
+    color: var(--pv-text);
+    background: var(--pv-nav-hover);
+    text-decoration: none;
+}
+
+.pv-breadcrumbs a:focus-visible,
+.pv-breadcrumbs .pv-bc-link:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--pv-search-focus-ring);
+}
+
+.pv-breadcrumbs .pv-bc-sep {
+    color: var(--pv-text-dim);
+    font-weight: 600;
+    margin: 0 1px;
+    user-select: none;
+}
+
+.pv-breadcrumbs .pv-bc-current {
+    color: var(--pv-text);
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 600;
+    border-radius: var(--pv-radius-sm);
+    padding: 2px 8px;
+    background: color-mix(in srgb, var(--pv-bg-header) 72%, transparent 28%);
+}
+
+/* ------------------------------------------------------------------
+   18. Empty state
+   ------------------------------------------------------------------ */
+
+.pv-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+    align-self: stretch;
+    min-height: 220px;
+    padding: 40px 24px;
+    text-align: center;
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-lg);
+    background:
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        color-mix(in srgb, var(--pv-bg-surface) 88%, transparent 12%);
+    box-shadow: var(--pv-shadow-sm);
+}
+
+.pv-empty-state-icon {
+    font-size: 56px !important;
+    color: var(--pv-text-dimmer);
+    opacity: 0.5;
+}
+
+.pv-empty-state-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--pv-text-dim);
+}
+
+.pv-empty-state-subtitle {
+    font-size: 13px;
+    color: var(--pv-text-dimmer);
+    max-width: 360px;
+    line-height: 1.45;
+}
+
+.pv-empty-state .q-btn {
+    margin-top: 2px;
+}
+
+.pv-inline-empty {
+    width: 100%;
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    color: var(--pv-text-dimmer);
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-md);
+    background:
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        color-mix(in srgb, var(--pv-bg-surface) 84%, transparent 16%);
+}
+
+/* ------------------------------------------------------------------
+   19. Batch / select mode
+   ------------------------------------------------------------------ */
+
+.pv-poster-checkbox {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    z-index: 11;
+}
+
+.pv-poster--selected {
+    outline: 2px solid var(--pv-accent);
+    outline-offset: -2px;
+}
+
+.pv-batch-bar {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--pv-bg) 90%, var(--pv-text) 10%);
+    border: 1px solid var(--pv-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* ------------------------------------------------------------------
+   20. View toggle (grid/list)
+   ------------------------------------------------------------------ */
+
+.pv-view-toggle .q-btn__wrapper {
+    min-height: 28px !important;
+    padding: 2px 8px !important;
+}
+
+/* ------------------------------------------------------------------
+   21. Mobile-specific overrides
+   ------------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+
+    /* Compact top bar on mobile */
+    .pv-header {
+        padding: 4px 0 !important;
+    }
+
+    /* Full-width search on mobile */
+    .pv-search-pair {
+        min-width: 100%;
+        max-width: 100%;
+    }
+
+    /* Smaller FABs on mobile */
+    .pv-fab {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Narrower drawers */
+    .q-drawer {
+        max-width: 260px !important;
+    }
+
+    /* Dialogs: reduce side gutters on mobile */
+    .q-dialog__inner {
+        padding: 4px !important;
+    }
+
+    .q-dialog__inner > div {
+        max-width: calc(100vw - 8px) !important;
+    }
+}
+
+/* ------------------------------------------------------------------
+   22. Drag & drop zone
+   ------------------------------------------------------------------ */
+
+.pv-dropzone {
+    border: 2px dashed var(--pv-border);
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    transition: border-color 200ms, background 200ms;
+    cursor: pointer;
+}
+
+.pv-dropzone:hover,
+.pv-dropzone.pv-dropzone--active {
+    border-color: var(--pv-accent);
+    background: var(--pv-accent-15);
+}
+
+.pv-dropzone-icon {
+    font-size: 48px !important;
+    color: var(--pv-text-dimmer);
+    margin-bottom: 8px;
+}
+
+.pv-dropzone-text {
+    font-size: 14px;
+    color: var(--pv-text-dim);
+}
+
+.pv-dropzone-hint {
+    font-size: 12px;
+    color: var(--pv-text-dimmer);
+    margin-top: 4px;
+}
+
+/* ------------------------------------------------------------------
+   23. Keyboard shortcut hint
+   ------------------------------------------------------------------ */
+
+.pv-kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    font-size: 11px;
+    font-family: monospace;
+    border: 1px solid var(--pv-border);
+    border-radius: 3px;
+    background: var(--pv-bg-surface);
+    color: var(--pv-text-dimmer);
+}
+
+/* ------------------------------------------------------------------
+   24. Metadata dialog enhancements
+   ------------------------------------------------------------------ */
+
+/* Glass-morphism header card */
+.pv-meta-header {
+    background:
+        radial-gradient(circle at top right, var(--pv-surface-glow), transparent 34%),
+        linear-gradient(135deg, var(--pv-bg-surface-2) 0%, var(--pv-bg-surface) 100%);
+    border: 1px solid var(--pv-border);
+    border-radius: 14px;
+    padding: 20px 24px;
+    backdrop-filter: blur(8px);
+}
+
+/* Widen metadata content by removing outer horizontal tab-panel padding */
+.pv-meta-dialog-card .q-tab-panel.nicegui-tab-panel {
+    padding: 0 !important;
+}
+
+.pv-meta-body {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    overflow-x: hidden;
+}
+
+.pv-meta-media-col,
+.pv-meta-fields-col {
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+.pv-meta-dialog-card .q-panel.scroll {
+    overflow-x: hidden !important;
+    scrollbar-color: color-mix(in srgb, var(--pv-accent) 34%, var(--pv-text) 66%) color-mix(in srgb, var(--pv-bg) 86%, transparent 14%);
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+}
+
+.pv-meta-dialog-card .pv-meta-body {
+    scrollbar-color: color-mix(in srgb, var(--pv-accent) 34%, var(--pv-text) 66%) color-mix(in srgb, var(--pv-bg) 86%, transparent 14%);
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+}
+
+.pv-meta-dialog-card .q-panel.scroll::-webkit-scrollbar,
+.pv-meta-dialog-card .pv-meta-body::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.pv-meta-dialog-card .q-panel.scroll::-webkit-scrollbar-track,
+.pv-meta-dialog-card .pv-meta-body::-webkit-scrollbar-track {
+    background: color-mix(in srgb, var(--pv-bg) 86%, transparent 14%);
+    border-radius: 999px;
+}
+
+.pv-meta-dialog-card .q-panel.scroll::-webkit-scrollbar-thumb,
+.pv-meta-dialog-card .pv-meta-body::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--pv-accent) 34%, var(--pv-text) 66%);
+    border: 1px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+    min-height: 36px;
+}
+
+.pv-meta-dialog-card .q-panel.scroll::-webkit-scrollbar-thumb:hover,
+.pv-meta-dialog-card .pv-meta-body::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--pv-accent) 48%, var(--pv-text) 52%);
+    background-clip: padding-box;
+}
+
+.pv-meta-dialog-card .q-panel.scroll::-webkit-scrollbar-thumb:active,
+.pv-meta-dialog-card .pv-meta-body::-webkit-scrollbar-thumb:active {
+    background: color-mix(in srgb, var(--pv-accent) 58%, var(--pv-text) 42%);
+    background-clip: padding-box;
+}
+
+.pv-meta-dialog-card .q-panel.scroll::-webkit-scrollbar-button,
+.pv-meta-dialog-card .pv-meta-body::-webkit-scrollbar-button {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+.pv-meta-dialog-card .q-panel.scroll::-webkit-scrollbar-corner,
+.pv-meta-dialog-card .pv-meta-body::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.q-drawer__content::-webkit-scrollbar-button,
+.q-drawer__content .scroll::-webkit-scrollbar-button,
+.q-page-container::-webkit-scrollbar-button,
+.q-page::-webkit-scrollbar-button,
+.q-page-container .scroll::-webkit-scrollbar-button,
+.q-page .scroll::-webkit-scrollbar-button,
+.q-dialog .q-dialog__inner::-webkit-scrollbar-button,
+.q-dialog .q-card::-webkit-scrollbar-button,
+.q-dialog .q-panel.scroll::-webkit-scrollbar-button,
+.q-dialog .scroll::-webkit-scrollbar-button,
+.q-dialog .q-scrollarea__container::-webkit-scrollbar-button {
+    width: 0 !important;
+    height: 0 !important;
+    display: none !important;
+}
+
+/* Type badge pill */
+.pv-meta-type-badge {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 3px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--pv-accent-75);
+    color: var(--pv-accent);
+    background: var(--pv-accent-15);
+}
+
+/* Subtitle under title */
+.pv-meta-subtitle {
+    font-size: 12.5px;
+    color: var(--pv-text-dim);
+    line-height: 1.4;
+}
+
+/* Info chips (year, language, journal) */
+.pv-meta-chip {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--pv-accent-75);
+    color: var(--pv-accent);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 180ms ease;
+}
+
+.pv-meta-chip:hover {
+    background: var(--pv-accent-15);
+}
+
+/* Section cards in details view */
+.pv-meta-section {
+    background: var(--pv-bg-surface);
+    border: 1px solid var(--pv-border);
+    border-radius: 12px;
+    padding: 10px 16px 12px;
+    transition: border-color 200ms ease;
+}
+
+.pv-meta-section:hover {
+    border-color: var(--pv-border-hover);
+}
+
+.pv-meta-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.1px;
+}
+
+.pv-meta-section .q-card__section {
+    padding: 0 !important;
+}
+
+.pv-meta-desc-card .q-card__section {
+    padding: 0 !important;
+}
+
+/* Add marker button */
+.pv-meta-add-marker-btn {
+    margin-left: -4px;
+    opacity: 0.6;
+    transition: opacity 180ms ease;
+}
+
+.pv-meta-add-marker-btn:hover {
+    opacity: 1;
+}
+
+/* KV grid cells */
+.pv-meta-kv-label {
+    font-size: 10px;
+    color: var(--pv-text-dimmer);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.pv-meta-kv-value {
+    font-size: 13px;
+    color: var(--pv-text);
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+/* Clickable KV value (e.g. DOI link) */
+a.pv-meta-kv-link {
+    color: var(--pv-accent);
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 180ms ease;
+}
+
+a.pv-meta-kv-link:hover {
+    opacity: 0.8;
+    text-decoration: underline;
+}
+
+/* File row */
+.pv-meta-file-row {
+    background: var(--pv-bg-surface);
+    border: 1px solid var(--pv-border);
+    border-radius: 10px;
+    padding: 8px 14px;
+    transition: border-color 200ms ease;
+}
+
+.pv-meta-file-row:hover {
+    border-color: var(--pv-accent-75);
+}
+
+/* Description/Abstract card */
+.pv-meta-desc-card {
+    background: var(--pv-bg-surface);
+    border: 1px solid var(--pv-border);
+    border-radius: 12px;
+    padding: 10px 16px 12px;
+}
+
+/* Remove darker container behind Details/Edit sections */
+.pv-meta-dialog-card .q-tab-panels,
+.pv-meta-dialog-card .q-panel-parent {
+    background: transparent !important;
+}
+
+@media (max-width: 700px) {
+    .pv-meta-topbar,
+    .pv-dialog-header {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .pv-meta-topbar-controls,
+    .pv-dialog-header-actions {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+    }
+
+    .pv-meta-body {
+        gap: 12px !important;
+        max-height: calc(100vh - 7rem) !important;
+        overflow-x: hidden;
+        padding-bottom: 8px;
+    }
+
+    .pv-meta-header {
+        padding: 14px 16px;
+    }
+
+    .pv-meta-file-row {
+        padding: 8px 10px;
+    }
+
+    .pv-meta-org-box {
+        padding: 10px;
+    }
+}
+
+@media (min-width: 701px) {
+    .pv-meta-body {
+        grid-template-columns: 240px minmax(0, 1fr);
+    }
+}
+
+.pv-meta-desc-text {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--pv-text-dim);
+}
+
+.pv-meta-desc-toggle {
+    font-size: 11.5px;
+    color: var(--pv-accent);
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 180ms ease;
+}
+
+.pv-meta-desc-toggle:hover {
+    opacity: 0.8;
+}
+
+/* Footer action bar */
+.pv-meta-footer {
+    border-top: 1px solid var(--pv-border);
+    padding-top: 12px;
+    margin-top: 4px;
+}
+
+/* Cover image container */
+.pv-meta-cover {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--pv-border);
+    transition: border-color 200ms ease;
+}
+
+.pv-meta-cover:hover {
+    border-color: var(--pv-accent-75);
+}
+
+/* Organization box (library, markers, tags) */
+.pv-meta-org-box {
+    background: var(--pv-bg-surface);
+    border: 1px solid var(--pv-border);
+    border-radius: 12px;
+    padding: 14px;
+    overflow: visible;
+}
+
+/* Chips inside selects: tighter fit */
+.pv-meta-org-box .q-field--dense .q-chip {
+    margin: 2px 4px 2px 0;
+    font-size: 11px;
+}
+
+.pv-subtle-panel {
+    background: var(--pv-bg-surface);
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-sm);
+}
+
+.pv-dialog-card,
+.pv-share-dialog-card,
+.pv-meta-dialog-card {
+    border-radius: var(--pv-radius-lg);
+    border: 1px solid var(--pv-border) !important;
+    background:
+        radial-gradient(circle at top right, color-mix(in srgb, var(--pv-accent) 16%, transparent), transparent 40%),
+        linear-gradient(180deg, var(--pv-surface-grad-top), var(--pv-surface-grad-bottom)),
+        color-mix(in srgb, var(--pv-bg) 93%, var(--pv-text) 7%);
+    box-shadow: var(--pv-shadow-lg);
+}
+
+.pv-dialog-header,
+.pv-share-header {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    border-color: var(--pv-border) !important;
+}
+
+.pv-dialog-card .pv-dialog-header,
+.pv-dialog-card .pv-share-header {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+}
+
+.pv-dialog-header-splitter.q-separator {
+    height: 1px;
+    margin: 0;
+    opacity: 1;
+    background: color-mix(in srgb, var(--pv-border) 84%, transparent 16%);
+}
+
+.pv-dialog-header-subtitle {
+    line-height: 1.35;
+}
+
+.pv-dialog-header-actions {
+    min-height: 34px;
+    gap: 6px;
+}
+
+.pv-dialog-footer,
+.pv-share-footer {
+    background: color-mix(in srgb, var(--pv-bg) 92%, var(--pv-text) 8%);
+    border-color: var(--pv-border) !important;
+}
+
+.pv-share-row {
+    width: 100%;
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-sm);
+    background: var(--pv-bg-card);
+}
+
+.pv-share-hover-row {
+    transition: background 180ms ease;
+}
+
+.pv-share-hover-row:hover {
+    background: var(--pv-menu-item-hover);
+}
+
+.pv-share-empty {
+    width: 100%;
+    border: 1px dashed var(--pv-border);
+    border-radius: var(--pv-radius-sm);
+    background: var(--pv-bg-surface);
+}
+
+.pv-upload-uploader,
+.pv-upload-uploader .q-uploader__header,
+.pv-upload-uploader .q-uploader__list {
+    box-shadow: none !important;
+}
+
+.pv-upload-dropzone {
+    border: 0 !important;
+    background: transparent !important;
+}
+
+.pv-upload-dropzone .q-uploader__header {
+    border: 2px dashed var(--pv-border) !important;
+    border-radius: var(--pv-radius-sm) !important;
+    background: var(--pv-bg-surface) !important;
+    padding: 8px 10px !important;
+    transition: border-color 200ms ease, background 200ms ease;
+}
+
+.pv-upload-dropzone .q-uploader__header-content {
+    gap: 4px !important;
+}
+
+.pv-upload-dropzone .q-uploader__subtitle {
+    margin-top: 0 !important;
+}
+
+.pv-upload-dropzone:hover .q-uploader__header,
+.pv-upload-dropzone.q-uploader--dnd .q-uploader__header,
+.pv-upload-dropzone.q-uploader--dragover .q-uploader__header {
+    border-color: var(--pv-accent) !important;
+    background: var(--pv-accent-15) !important;
+}
+
+
+.pv-upload-uploader.q-uploader .q-uploader__list {
+    display: none !important;
+    min-height: 0 !important;
+    height: 0 !important;
+    padding: 0 !important;
+}
+
+.pv-upload-uploader .q-uploader__header {
+    min-height: 0 !important;
+    padding-bottom: 8px !important;
+}
+
+.pv-upload-queue {
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-sm);
+    background: var(--pv-bg-surface);
+    padding: 8px;
+}
+
+.pv-upload-queue-list {
+    max-height: min(30vh, 260px);
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.pv-upload-queue-item {
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-sm);
+    background: var(--pv-bg-card);
+}
+
+.pv-warn-panel {
+    border-radius: var(--pv-radius-sm);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    background: rgba(245, 158, 11, 0.10);
+}
+
+.pv-warning-text {
+    color: rgb(245, 158, 11) !important;
+}
+
+.pv-warning-border {
+    border-color: rgba(245, 158, 11, 0.45) !important;
+}
+
+.pv-section-heading {
+    font-size: 1.125rem;
+    font-weight: 600;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--pv-border);
+}
+
+.pv-busy-pill {
+    border-radius: 999px;
+    padding: 6px 16px;
+    box-shadow: var(--pv-shadow-md);
+    border: 1px solid var(--pv-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: auto;
+    background: color-mix(in srgb, var(--pv-bg) 90%, var(--pv-text) 10%);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+.pv-meta-field .q-field__control {
+    border-radius: var(--pv-radius-sm) !important;
+    background: var(--pv-bg-surface) !important;
+    border-color: var(--pv-border) !important;
+}
+
+.pv-meta-field.q-field--focused .q-field__control,
+.pv-meta-field.q-field--highlighted .q-field__control {
+    border-color: var(--pv-bg-card-hover-border) !important;
+}
+
+.pv-meta-field .q-field__native,
+.pv-meta-field .q-field__label,
+.pv-meta-field input,
+.pv-meta-field textarea {
+    color: var(--pv-text) !important;
+}
+
+.pv-meta-action-btn .q-btn__wrapper,
+.pv-meta-lock-btn .q-btn__wrapper {
+    border-radius: var(--pv-radius-sm) !important;
+    border: 1px solid var(--pv-border) !important;
+    background: var(--pv-bg-surface) !important;
+    color: var(--pv-text) !important;
+}
+
+.pv-meta-action-btn:hover .q-btn__wrapper,
+.pv-meta-lock-btn:hover .q-btn__wrapper {
+    border-color: var(--pv-bg-card-hover-border) !important;
+    background: var(--pv-bg-surface-2) !important;
+}
+
+.pv-meta-save-btn .q-btn__wrapper {
+    border-radius: var(--pv-radius-sm) !important;
+}
+
+.pv-log-code {
+    width: 100%;
+    border: 1px solid var(--pv-border);
+    border-radius: var(--pv-radius-sm);
+    background: color-mix(in srgb, var(--pv-bg) 90%, var(--pv-text) 10%);
+    padding: 8px 10px;
+}
+
+.pv-log-code pre,
+.pv-log-code code {
+    background: transparent !important;
+    color: var(--pv-text-dim) !important;
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.pv-log-row {
+    background: var(--pv-bg-surface) !important;
+    border-color: var(--pv-border) !important;
+    box-shadow: none !important;
+}
+
+/* ------------------------------------------------------------------
+    25. Layout + Overlay Overrides (stability-focused)
+    ------------------------------------------------------------------ */
+
+/* Smoother global transitions */
+*,
+*::before,
+*::after {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Section row titles */
+.pv-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* Sidebar shell separation from page canvas */
+.q-drawer {
+    transition: width 280ms cubic-bezier(.4, 0, .2, 1) !important;
+    background-color: color-mix(in srgb, var(--pv-bg) 86%, var(--pv-text) 14%) !important;
+    background-image: linear-gradient(180deg,
+            color-mix(in srgb, var(--pv-bg) 82%, var(--pv-text) 18%),
+            color-mix(in srgb, var(--pv-bg) 94%, black 6%)) !important;
+    border-right: 1px solid color-mix(in srgb, var(--pv-border-hover) 86%, transparent 14%);
+    box-shadow: var(--pv-shadow-md);
+}
+
+.q-drawer__content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    gap: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: transparent !important;
+}
+
+.q-drawer__content.pv-surface {
+    background: color-mix(in srgb, var(--pv-bg) 88%, transparent 12%) !important;
+}
+
+/* Dialog backdrop (kept flat to avoid flash artifacts) */
+.q-dialog__backdrop {
+    background: rgba(2, 8, 16, 0.86) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Modal-open canvas fallback (do not lock geometry here) */
+html.nicegui-dialog-open,
+html.nicegui-dialog-open body,
+body.q-body--prevent-scroll {
+    background-color: var(--pv-bg-canvas-bottom) !important;
+    background-image: none !important;
+}
+
+/* ------------------------------------------------------------------
+    26. Shared scrollbars (sidebar + dialogs + main page)
+    ------------------------------------------------------------------ */
+
+.q-drawer__content,
+.q-drawer__content .scroll,
+.q-drawer__content .q-scrollarea__container,
+.q-page-container,
+.q-page,
+.q-page-container .scroll,
+.q-page .scroll,
+.q-page-container .q-scrollarea__container,
+.q-page .q-scrollarea__container,
+.q-dialog .q-dialog__inner,
+.q-dialog .q-card,
+.q-dialog .q-panel.scroll,
+.q-dialog .scroll,
+.q-dialog .q-scrollarea__container {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--pv-text) 44%, transparent 56%) color-mix(in srgb, var(--pv-bg) 78%, transparent 22%);
+}
+
+.q-drawer__content::-webkit-scrollbar,
+.q-drawer__content .scroll::-webkit-scrollbar,
+.q-drawer__content .q-scrollarea__container::-webkit-scrollbar,
+.q-page-container::-webkit-scrollbar,
+.q-page::-webkit-scrollbar,
+.q-page-container .scroll::-webkit-scrollbar,
+.q-page .scroll::-webkit-scrollbar,
+.q-page-container .q-scrollarea__container::-webkit-scrollbar,
+.q-page .q-scrollarea__container::-webkit-scrollbar,
+.q-dialog .q-dialog__inner::-webkit-scrollbar,
+.q-dialog .q-card::-webkit-scrollbar,
+.q-dialog .q-panel.scroll::-webkit-scrollbar,
+.q-dialog .scroll::-webkit-scrollbar,
+.q-dialog .q-scrollarea__container::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.q-drawer__content::-webkit-scrollbar-track,
+.q-drawer__content .scroll::-webkit-scrollbar-track,
+.q-drawer__content .q-scrollarea__container::-webkit-scrollbar-track,
+.q-page-container::-webkit-scrollbar-track,
+.q-page::-webkit-scrollbar-track,
+.q-page-container .scroll::-webkit-scrollbar-track,
+.q-page .scroll::-webkit-scrollbar-track,
+.q-page-container .q-scrollarea__container::-webkit-scrollbar-track,
+.q-page .q-scrollarea__container::-webkit-scrollbar-track,
+.q-dialog .q-dialog__inner::-webkit-scrollbar-track,
+.q-dialog .q-card::-webkit-scrollbar-track,
+.q-dialog .q-panel.scroll::-webkit-scrollbar-track,
+.q-dialog .scroll::-webkit-scrollbar-track,
+.q-dialog .q-scrollarea__container::-webkit-scrollbar-track {
+    background: color-mix(in srgb, var(--pv-bg) 78%, transparent 22%);
+    border-radius: 999px;
+}
+
+.q-drawer__content::-webkit-scrollbar-thumb,
+.q-drawer__content .scroll::-webkit-scrollbar-thumb,
+.q-drawer__content .q-scrollarea__container::-webkit-scrollbar-thumb,
+.q-page-container::-webkit-scrollbar-thumb,
+.q-page::-webkit-scrollbar-thumb,
+.q-page-container .scroll::-webkit-scrollbar-thumb,
+.q-page .scroll::-webkit-scrollbar-thumb,
+.q-page-container .q-scrollarea__container::-webkit-scrollbar-thumb,
+.q-page .q-scrollarea__container::-webkit-scrollbar-thumb,
+.q-dialog .q-dialog__inner::-webkit-scrollbar-thumb,
+.q-dialog .q-card::-webkit-scrollbar-thumb,
+.q-dialog .q-panel.scroll::-webkit-scrollbar-thumb,
+.q-dialog .scroll::-webkit-scrollbar-thumb,
+.q-dialog .q-scrollarea__container::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--pv-text) 44%, transparent 56%);
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    border-radius: 999px;
+}
+
+.q-drawer__content::-webkit-scrollbar-thumb:hover,
+.q-drawer__content .scroll::-webkit-scrollbar-thumb:hover,
+.q-drawer__content .q-scrollarea__container::-webkit-scrollbar-thumb:hover,
+.q-page-container::-webkit-scrollbar-thumb:hover,
+.q-page::-webkit-scrollbar-thumb:hover,
+.q-page-container .scroll::-webkit-scrollbar-thumb:hover,
+.q-page .scroll::-webkit-scrollbar-thumb:hover,
+.q-page-container .q-scrollarea__container::-webkit-scrollbar-thumb:hover,
+.q-page .q-scrollarea__container::-webkit-scrollbar-thumb:hover,
+.q-dialog .q-dialog__inner::-webkit-scrollbar-thumb:hover,
+.q-dialog .q-card::-webkit-scrollbar-thumb:hover,
+.q-dialog .q-panel.scroll::-webkit-scrollbar-thumb:hover,
+.q-dialog .scroll::-webkit-scrollbar-thumb:hover,
+.q-dialog .q-scrollarea__container::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--pv-text) 58%, transparent 42%);
+}

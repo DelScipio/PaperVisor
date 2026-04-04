@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-label="PaperVisor logo">
+  <defs>
+    <filter id="pv-shadow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+    <filter id="pv-glow" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#2EDBFF" flood-opacity="0.45"/>
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#FF3BCE" flood-opacity="0.25"/>
+    </filter>
+    <clipPath id="pv-rain-clip">
+      <!-- allow rainbow only above the book fold -->
+      <rect x="0" y="0" width="128" height="70" />
+    </clipPath>
+  </defs>
+
+  <!-- Rainbow emerging from book -->
+  <g clip-path="url(#pv-rain-clip)" filter="url(#pv-glow)" stroke-linecap="round" fill="none">
+    <!-- draw as stacked arcs, thick to thin for legibility -->
+    <path d="M34 74c6-26 18-40 30-40s24 14 30 40" stroke="#FF3B3B" stroke-width="10"/>
+    <path d="M36 74c5-23 16-35 28-35s23 12 28 35" stroke="#FFB62E" stroke-width="8"/>
+    <path d="M38 74c4-20 14-30 26-30s22 10 26 30" stroke="#39E06D" stroke-width="7"/>
+    <path d="M40 74c3-17 12-25 24-25s21 8 24 25" stroke="#2EDBFF" stroke-width="6"/>
+    <path d="M42 74c2-14 10-20 22-20s20 6 22 20" stroke="#3B66FF" stroke-width="5"/>
+    <path d="M44 74c1-11 8-16 20-16s19 5 20 16" stroke="#FF3BCE" stroke-width="4"/>
+  </g>
+
+  <!-- Open book (simple + high contrast) -->
+  <g filter="url(#pv-shadow)">
+    <!-- pages -->
+    <path d="M20 56c15-7 29-10 44-10v54c-15 0-29 3-44 10V56z" fill="#F6FAFF"/>
+    <path d="M108 56c-15-7-29-10-44-10v54c15 0 29 3 44 10V56z" fill="#F6FAFF"/>
+
+    <!-- subtle page shading -->
+    <path d="M24 58c12-5 24-7 36-7v46c-12 0-24 2-36 7V58z" fill="#EAF2FF" opacity="0.8"/>
+    <path d="M104 58c-12-5-24-7-36-7v46c12 0 24 2 36 7V58z" fill="#EAF2FF" opacity="0.8"/>
+
+    <!-- outlines -->
+    <path d="M20 56c15-7 29-10 44-10v54c-15 0-29 3-44 10V56z" stroke="#0B0F1A" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M108 56c-15-7-29-10-44-10v54c15 0 29 3 44 10V56z" stroke="#0B0F1A" stroke-width="4" stroke-linejoin="round"/>
+
+    <!-- center fold -->
+    <path d="M64 46v54" stroke="#0B0F1A" stroke-width="4" stroke-linecap="round"/>
+
+    <!-- a couple of page lines (minimal) -->
+    <g stroke="#0B0F1A" stroke-width="2" opacity="0.18" stroke-linecap="round">
+      <path d="M28 72h28"/>
+      <path d="M72 72h28"/>
+      <path d="M28 86h28"/>
+      <path d="M72 86h28"/>
+    </g>
+  </g>
+</svg>

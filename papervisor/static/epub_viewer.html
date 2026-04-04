@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EPUB Reader</title>
+    <style>
+      html, body { height: 100%; margin: 0; background: #0b1220; color: rgba(255,255,255,0.9); }
+      .bar {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.04);
+        box-sizing: border-box;
+      }
+      .btn {
+        cursor: pointer;
+        user-select: none;
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.9);
+        font: 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      .btn:disabled { opacity: 0.45; cursor: default; }
+      .title {
+        font: 13px/1.1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      #viewer {
+        height: calc(100% - 44px);
+        width: 100%;
+      }
+      .status {
+        margin-left: auto;
+        font: 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color: rgba(255,255,255,0.65);
+      }
+      .select {
+        height: 30px;
+        max-width: 360px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.90);
+        padding: 0 10px;
+        font: 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      .select option { color: #111; }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <button id="prev" class="btn">Prev</button>
+      <button id="next" class="btn">Next</button>
+      <select id="theme" class="select" title="Theme">
+        <option value="" disabled>Theme…</option>
+        <option value="white">White</option>
+        <option value="sepia">Sepia</option>
+        <option value="dark">Dark</option>
+        <option value="amoled">AMOLED</option>
+      </select>
+      <select id="chapters" class="select" title="Chapters">
+        <option value="">Chapters…</option>
+      </select>
+      <div id="title" class="title"></div>
+      <div id="status" class="status"></div>
+    </div>
+    <div id="viewer"></div>
+
+    <!-- epub.js requires JSZip to unzip EPUB containers -->
+    <script src="/static/vendor/jszip.min.js"></script>
+    <script src="/static/vendor/epub.min.js"></script>
+    <script>
+      function qs(name) {
+        const u = new URL(window.location.href);
+        return u.searchParams.get(name) || '';
+      }
+
+      const fileUrl = qs('file');
+      const paperId = qs('pv_paper_id');
+      const displayTitle = qs('pv_title') || 'EPUB';
+      document.getElementById('title').textContent = displayTitle;
+
+      const status = document.getElementById('status');
+      const prevBtn = document.getElementById('prev');
+      const nextBtn = document.getElementById('next');
+      const themeSel = document.getElementById('theme');
+      const chaptersSel = document.getElementById('chapters');
+
+      function setStatus(text) { status.textContent = text || ''; }
+
+      function lsGet(key) {
+        try { return window.localStorage ? window.localStorage.getItem(key) : null; } catch (_) { return null; }
+      }
+      function lsSet(key, value) {
+        try { if (window.localStorage) window.localStorage.setItem(key, value); } catch (_) {}
+      }
+
+      function themeKey() { return 'pv_epub_theme'; }
+      function progressKey() {
+        const id = (paperId || '').trim();
+        return id ? ('pv_epub_progress:' + id) : '';
+      }
+
+      async function fetchServerState() {
+        const id = (paperId || '').trim();
+        if (!id) return null;
+        try {
+          const res = await fetch('/api/v1/papers/' + encodeURIComponent(id) + '/reading_state', { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (_) {
+          return null;
+        }
+      }
+
+      async function postOpened() {
+        const id = (paperId || '').trim();
+        if (!id) return;
+        try {
+          await fetch('/api/v1/papers/' + encodeURIComponent(id) + '/opened', { method: 'POST' });
+        } catch (_) {}
+      }
+
+      let lastProgressPostAt = 0;
+      async function postServerState(progress, location) {
+        const id = (paperId || '').trim();
+        if (!id) return;
+        const now = Date.now();
+        if (now - lastProgressPostAt < 900) return; // throttle
+        lastProgressPostAt = now;
+        try {
+          await fetch('/api/v1/papers/' + encodeURIComponent(id) + '/reading_state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ progress: progress, location: location })
+          });
+        } catch (_) {}
+      }
+
+      function setActiveThemeValue(mode) {
+        if (!themeSel) return;
+        themeSel.value = mode;
+      }
+
+      async function openEpub() {
+        if (!fileUrl) {
+          setStatus('Missing file URL');
+          return;
+        }
+        if (!window.ePub) {
+          setStatus('Failed to load epub.js');
+          return;
+        }
+        if (!window.JSZip) {
+          setStatus('Failed to load JSZip');
+          return;
+        }
+
+        setStatus('Downloading…');
+        // Count this as an "open" (server-side).
+        postOpened();
+        const res = await fetch(fileUrl, { cache: 'no-store' });
+        if (!res.ok) {
+          setStatus('Failed to download EPUB');
+          return;
+        }
+        const buf = await res.arrayBuffer();
+
+        setStatus('Opening…');
+        const book = ePub();
+        await book.open(buf, 'binary');
+
+        const rendition = book.renderTo('viewer', {
+          width: '100%',
+          height: '100%',
+          spread: 'auto',
+          flow: 'paginated'
+        });
+        const boundIframeDocs = new Set();
+
+        function normHref(href) {
+          let h = String(href || '').trim();
+          if (!h) return '';
+          // drop fragment
+          const i = h.indexOf('#');
+          if (i >= 0) h = h.slice(0, i);
+          // remove leading ./
+          if (h.startsWith('./')) h = h.slice(2);
+          return h;
+        }
+
+        let pendingChapterHref = '';
+        function syncChapterSelection(href) {
+          if (!chaptersSel) return;
+          const want = normHref(href);
+          if (!want) return;
+
+          // If chapters not loaded yet, remember and try later.
+          if (!chaptersSel.options || chaptersSel.options.length <= 1) {
+            pendingChapterHref = want;
+            return;
+          }
+
+          for (const opt of Array.from(chaptersSel.options)) {
+            const ov = normHref(opt.value);
+            if (ov && ov === want) {
+              chaptersSel.value = opt.value;
+              pendingChapterHref = '';
+              return;
+            }
+          }
+
+          // Fallback: if no exact match, keep pending.
+          pendingChapterHref = want;
+        }
+
+        function computeChapterProgress(location) {
+          try {
+            const spineItems = (book && book.spine && book.spine.spineItems) ? book.spine.spineItems : [];
+            const totalChapters = spineItems.length || 0;
+            if (!totalChapters) return null;
+
+            let idx = null;
+            const start = location && location.start ? location.start : null;
+            if (start && typeof start.index === 'number') {
+              idx = start.index;
+            }
+
+            // If epub.js doesn't give an index, try matching by href.
+            if (idx === null) {
+              const href = start && (start.href || start.url) ? (start.href || start.url) : '';
+              const want = normHref(href);
+              if (want) {
+                for (let i = 0; i < spineItems.length; i++) {
+                  const it = spineItems[i];
+                  const cand = normHref((it && (it.href || it.url)) ? (it.href || it.url) : '');
+                  if (cand && cand === want) { idx = i; break; }
+                }
+              }
+            }
+
+            if (idx === null) return null;
+            idx = Math.max(0, Math.min(idx, totalChapters - 1));
+
+            // Intra-chapter progress when available (paginated flow)
+            let intra = 0.0;
+            const disp = start && start.displayed ? start.displayed : (location && location.start && location.start.displayed ? location.start.displayed : null);
+            const page = disp && disp.page ? Number(disp.page) : 0;
+            const total = disp && disp.total ? Number(disp.total) : 0;
+            if (page > 0 && total > 0) {
+              intra = Math.max(0, Math.min(1, page / total));
+            }
+
+            const p = (idx + intra) / totalChapters;
+            return Math.max(0, Math.min(1, p));
+          } catch (_) {
+            return null;
+          }
+        }
+
+        // Themes (White / Sepia / Dark) applied inside the EPUB iframe(s).
+        // Many EPUBs default to dark text; our app background is dark.
+        const themes = {
+          white: {
+            pageBg: '#ffffff',
+            text: '#111111',
+            link: '#0b57d0'
+          },
+          sepia: {
+            pageBg: '#f4ecd8',
+            text: '#2b241b',
+            link: '#0b57d0'
+          },
+          dark: {
+            pageBg: '#0b1220',
+            text: 'rgba(255,255,255,0.92)',
+            link: 'rgba(34,197,94,0.95)'
+          },
+          amoled: {
+            pageBg: '#000000',
+            text: 'rgba(255,255,255,0.95)',
+            link: 'rgba(52,211,153,0.95)'
+          }
+        };
+
+        function applyTheme(mode) {
+          const resolvedMode = themes[mode] ? mode : 'white';
+          const t = themes[resolvedMode];
+          try {
+            rendition.themes.register('pv', {
+              'html': { 'background': t.pageBg, 'color': t.text },
+              'body': {
+                'background': t.pageBg,
+                'color': t.text,
+                'line-height': '1.6',
+                'font-size': '1.05em',
+                'padding': '18px 20px',
+                'margin': '0 auto',
+                'max-width': '900px',
+                'font-family': 'system-ui, -apple-system, Segoe UI, Roboto, sans-serif'
+              },
+              'p': { 'margin': '0 0 0.9em 0' },
+              'img': { 'max-width': '100%', 'height': 'auto' },
+              'a': { 'color': t.link }
+            });
+            rendition.themes.select('pv');
+          } catch (_) {
+            // If themes are not available in this epub.js build, keep default.
+          }
+
+          // Match outer viewer background to selected theme.
+          try {
+            document.getElementById('viewer').style.background = t.pageBg;
+            document.body.style.background = (resolvedMode === 'amoled') ? '#000000' : '#0b1220';
+          } catch (_) {}
+
+          setActiveThemeValue(resolvedMode);
+
+          // Persist last selected theme across sessions.
+          lsSet(themeKey(), resolvedMode);
+        }
+
+        // Restore last reading position (CFI) from server, fallback to localStorage.
+        const pk = progressKey();
+        const localCfi = pk ? (lsGet(pk) || '').trim() : '';
+
+        let serverCfi = '';
+        try {
+          const st = await fetchServerState();
+          const loc = st && st.location ? String(st.location) : '';
+          if (loc && loc.toLowerCase().includes('epubcfi')) serverCfi = loc.trim();
+        } catch (_) {}
+
+        const savedCfi = (serverCfi || localCfi || '').trim();
+
+        try {
+          if (savedCfi) await rendition.display(savedCfi);
+          else await rendition.display();
+        } catch (_) {
+          await rendition.display();
+        }
+        setStatus('');
+
+        // Start with last theme (or White).
+        const savedTheme = (lsGet(themeKey()) || '').trim().toLowerCase();
+        applyTheme(savedTheme || 'white');
+
+        if (themeSel) {
+          themeSel.addEventListener('change', () => {
+            applyTheme((themeSel.value || 'white').trim().toLowerCase());
+          });
+        }
+
+        // Populate chapters (TOC)
+        async function loadChapters() {
+          if (!chaptersSel) return;
+          try {
+            const nav = await book.loaded.navigation;
+            const toc = (nav && nav.toc) ? nav.toc : [];
+
+            function flatten(items, depth) {
+              let out = [];
+              for (const it of (items || [])) {
+                const label = (it && it.label) ? (it.label.trim ? it.label.trim() : String(it.label)) : '';
+                const href = it && (it.href || it.id);
+                if (href) out.push({ label, href, depth });
+                if (it && it.subitems && it.subitems.length) {
+                  out = out.concat(flatten(it.subitems, depth + 1));
+                }
+              }
+              return out;
+            }
+
+            const flat = flatten(toc, 0);
+
+            // Clear options
+            chaptersSel.innerHTML = '';
+            const ph = document.createElement('option');
+            ph.value = '';
+            ph.textContent = flat.length ? 'Chapters…' : 'No chapters';
+            chaptersSel.appendChild(ph);
+
+            for (const item of flat) {
+              const opt = document.createElement('option');
+              opt.value = item.href;
+              const indent = item.depth > 0 ? ('\u00A0\u00A0'.repeat(item.depth)) : '';
+              opt.textContent = (indent + (item.label || item.href));
+              chaptersSel.appendChild(opt);
+            }
+
+            chaptersSel.disabled = flat.length === 0;
+
+            // If we already know the current chapter (e.g. from restored CFI), select it.
+            if (pendingChapterHref) {
+              syncChapterSelection(pendingChapterHref);
+            }
+          } catch (e) {
+            // If navigation can't be loaded, keep dropdown as placeholder.
+            try { chaptersSel.disabled = true; } catch (_) {}
+          }
+        }
+
+        await loadChapters();
+
+        if (chaptersSel) {
+          chaptersSel.addEventListener('change', async () => {
+            const href = chaptersSel.value || '';
+            if (!href) return;
+            try {
+              setStatus('');
+              await rendition.display(href);
+            } catch (e) {
+              console.error(e);
+              setStatus('Failed to navigate');
+            }
+          });
+        }
+
+        prevBtn.addEventListener('click', () => rendition.prev());
+        nextBtn.addEventListener('click', () => rendition.next());
+
+        function handleKey(e) {
+          if (e.repeat) return;
+          // Arrow navigation
+          if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            rendition.prev();
+          }
+          if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            rendition.next();
+          }
+        }
+
+        // Works when the top-level page has focus.
+        document.addEventListener('keydown', handleKey);
+
+        // Also bind inside each rendered iframe, so keys work while reading.
+        try {
+          rendition.on('rendered', (_section, iframe) => {
+            try {
+              const doc = iframe && iframe.contentDocument;
+              if (!doc) return;
+              if (boundIframeDocs.has(doc)) return;
+              doc.addEventListener('keydown', handleKey);
+              boundIframeDocs.add(doc);
+            } catch (_) {}
+          });
+        } catch (_) {}
+
+        window.addEventListener('beforeunload', () => {
+          try { document.removeEventListener('keydown', handleKey); } catch (_) {}
+          for (const doc of boundIframeDocs) {
+            try { doc.removeEventListener('keydown', handleKey); } catch (_) {}
+          }
+          boundIframeDocs.clear();
+        });
+
+        // Show a simple pagination hint (page / total) when available.
+        rendition.on('relocated', (location) => {
+          try {
+            const disp = location && location.start && location.start.displayed;
+            const page = disp && disp.page;
+            const total = disp && disp.total;
+            if (page && total) {
+              setStatus(page + ' / ' + total);
+            } else {
+              setStatus('');
+            }
+
+            // Persist last location (CFI) per book.
+            const cfi = location && location.start && location.start.cfi;
+            const pk = progressKey();
+            if (pk && cfi) {
+              lsSet(pk, String(cfi));
+            }
+
+            // Keep the chapter dropdown in sync.
+            const href = location && location.start && location.start.href ? String(location.start.href) : '';
+            if (href) syncChapterSelection(href);
+
+            // Also persist to server (progress + CFI).
+            if (cfi) {
+              const p = computeChapterProgress(location);
+              const progress = (p !== null && Number.isFinite(p)) ? p : null;
+              postServerState(progress, String(cfi));
+            }
+          } catch (_) {
+            setStatus('');
+          }
+        });
+      }
+
+      openEpub().catch(err => {
+        console.error(err);
+        setStatus('Failed to open EPUB');
+      });
+    </script>
+  </body>
+</html>

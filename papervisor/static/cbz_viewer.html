@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CBZ Reader</title>
+    <style>
+      html, body { height: 100%; margin: 0; background: #0b1220; color: rgba(255,255,255,0.9); }
+      .bar {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.04);
+        box-sizing: border-box;
+      }
+      .btn {
+        cursor: pointer;
+        user-select: none;
+        padding: 6px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.9);
+        font: 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      }
+      .btn:disabled { opacity: 0.45; cursor: default; }
+      .title {
+        font: 13px/1.1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .status {
+        margin-left: auto;
+        font: 12px/1.1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        color: rgba(255,255,255,0.65);
+      }
+      #stage {
+        height: calc(100% - 44px);
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      #pageImg {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bar">
+      <button id="prev" class="btn">Prev</button>
+      <button id="next" class="btn">Next</button>
+      <div id="title" class="title"></div>
+      <div id="status" class="status"></div>
+    </div>
+    <div id="stage"><img id="pageImg" alt="" /></div>
+
+    <!-- JSZip via CDN (CBZ is a ZIP of images) -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script>
+      function qs(name) {
+        const u = new URL(window.location.href);
+        return u.searchParams.get(name) || '';
+      }
+
+      const fileUrl = qs('file');
+      const paperId = qs('pv_paper_id');
+      const displayTitle = qs('pv_title') || 'CBZ';
+      document.getElementById('title').textContent = displayTitle;
+
+      const status = document.getElementById('status');
+      const prevBtn = document.getElementById('prev');
+      const nextBtn = document.getElementById('next');
+      const img = document.getElementById('pageImg');
+
+      let pageNames = []; // [name]
+      let loadedZip = null;
+      const pageUrlCache = new Map(); // idx -> blobUrl
+      const MAX_CACHED_PAGE_URLS = 6;
+      let idx = 0;
+      let renderSeq = 0;
+
+      function lsGet(key) {
+        try { return window.localStorage ? window.localStorage.getItem(key) : null; } catch (_) { return null; }
+      }
+      function lsSet(key, value) {
+        try { if (window.localStorage) window.localStorage.setItem(key, value); } catch (_) {}
+      }
+      function progressKey() {
+        const id = (paperId || '').trim();
+        return id ? ('pv_cbz_progress:' + id) : '';
+      }
+
+      async function fetchServerState() {
+        const id = (paperId || '').trim();
+        if (!id) return null;
+        try {
+          const res = await fetch('/api/v1/papers/' + encodeURIComponent(id) + '/reading_state', { cache: 'no-store' });
+          if (!res.ok) return null;
+          return await res.json();
+        } catch (_) {
+          return null;
+        }
+      }
+
+      async function postOpened() {
+        const id = (paperId || '').trim();
+        if (!id) return;
+        try {
+          await fetch('/api/v1/papers/' + encodeURIComponent(id) + '/opened', { method: 'POST' });
+        } catch (_) {}
+      }
+
+      let lastProgressPostAt = 0;
+      async function postServerState(progress, location) {
+        const id = (paperId || '').trim();
+        if (!id) return;
+        const now = Date.now();
+        if (now - lastProgressPostAt < 900) return; // throttle
+        lastProgressPostAt = now;
+        try {
+          await fetch('/api/v1/papers/' + encodeURIComponent(id) + '/reading_state', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ progress: progress, location: location })
+          });
+        } catch (_) {}
+      }
+
+      function setStatus(text) { status.textContent = text || ''; }
+
+      function isImage(name) {
+        const n = (name || '').toLowerCase();
+        return n.endsWith('.jpg') || n.endsWith('.jpeg') || n.endsWith('.png') || n.endsWith('.webp') || n.endsWith('.gif');
+      }
+
+      function naturalSort(a, b) {
+        return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+      }
+
+      function revokePageUrl(pageIndex) {
+        const url = pageUrlCache.get(pageIndex);
+        if (!url) return;
+        pageUrlCache.delete(pageIndex);
+        try { URL.revokeObjectURL(url); } catch (_) {}
+      }
+
+      function trimPageUrlCache(center) {
+        const keep = new Set();
+        for (let i = center - 2; i <= center + 2; i += 1) {
+          keep.add(i);
+        }
+        for (const pageIndex of Array.from(pageUrlCache.keys())) {
+          if (!keep.has(pageIndex)) revokePageUrl(pageIndex);
+        }
+        if (pageUrlCache.size <= MAX_CACHED_PAGE_URLS) return;
+        for (const pageIndex of Array.from(pageUrlCache.keys())) {
+          if (pageUrlCache.size <= MAX_CACHED_PAGE_URLS) break;
+          if (pageIndex === center) continue;
+          revokePageUrl(pageIndex);
+        }
+      }
+
+      async function getPageBlobUrl(pageIndex) {
+        if (pageUrlCache.has(pageIndex)) {
+          return pageUrlCache.get(pageIndex) || '';
+        }
+        if (!loadedZip) return '';
+        if (pageIndex < 0 || pageIndex >= pageNames.length) return '';
+        const file = loadedZip.file(pageNames[pageIndex]);
+        if (!file) return '';
+        const blob = await file.async('blob');
+        const blobUrl = URL.createObjectURL(blob);
+        pageUrlCache.set(pageIndex, blobUrl);
+        trimPageUrlCache(pageIndex);
+        return blobUrl;
+      }
+
+      function prefetchNeighbors(center) {
+        for (const i of [center - 1, center + 1]) {
+          if (i < 0 || i >= pageNames.length) continue;
+          if (pageUrlCache.has(i)) continue;
+          getPageBlobUrl(i).then(() => trimPageUrlCache(center)).catch(() => {});
+        }
+      }
+
+      async function render() {
+        if (!pageNames.length) {
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+          img.removeAttribute('src');
+          setStatus('No images in CBZ');
+          return;
+        }
+        idx = Math.max(0, Math.min(idx, pageNames.length - 1));
+        const currentSeq = ++renderSeq;
+
+        prevBtn.disabled = idx <= 0;
+        nextBtn.disabled = idx >= pageNames.length - 1;
+
+        setStatus('Loading ' + (idx + 1) + ' / ' + pageNames.length + '…');
+        const blobUrl = await getPageBlobUrl(idx);
+        if (currentSeq !== renderSeq) return;
+        if (!blobUrl) {
+          setStatus('Failed to render page');
+          return;
+        }
+        if (img.src !== blobUrl) {
+          img.src = blobUrl;
+        }
+        setStatus((idx + 1) + ' / ' + pageNames.length);
+
+        const pk = progressKey();
+        if (pk) lsSet(pk, String(idx));
+
+        // Also persist to server.
+        const total = pageNames.length || 0;
+        const progress = total > 0 ? Math.max(0, Math.min(1, (idx + 1) / total)) : null;
+        postServerState(progress, 'idx:' + String(idx));
+
+        prefetchNeighbors(idx);
+      }
+
+      function cleanup() {
+        for (const pageIndex of Array.from(pageUrlCache.keys())) {
+          revokePageUrl(pageIndex);
+        }
+        pageUrlCache.clear();
+        loadedZip = null;
+      }
+      window.addEventListener('beforeunload', cleanup);
+
+      async function loadCbz() {
+        if (!fileUrl) {
+          setStatus('Missing file URL');
+          return;
+        }
+        if (!window.JSZip) {
+          setStatus('Failed to load JSZip');
+          return;
+        }
+
+        // Count this as an "open" (server-side).
+        postOpened();
+
+        setStatus('Downloading…');
+        const res = await fetch(fileUrl, { cache: 'no-store' });
+        if (!res.ok) {
+          setStatus('Failed to download');
+          return;
+        }
+        const buf = await res.arrayBuffer();
+
+        setStatus('Unzipping…');
+        loadedZip = await JSZip.loadAsync(buf);
+
+        pageNames = Object.keys(loadedZip.files)
+          .filter((n) => !loadedZip.files[n].dir)
+          .filter(isImage)
+          .sort(naturalSort);
+
+        // Restore position from server, fallback to localStorage.
+        let savedIdx = null;
+        try {
+          const st = await fetchServerState();
+          const loc = st && st.location ? String(st.location) : '';
+          if (loc && loc.toLowerCase().startsWith('idx:')) {
+            const n = parseInt(loc.split(':')[1] || '0', 10);
+            if (Number.isFinite(n)) savedIdx = n;
+          }
+        } catch (_) {}
+
+        if (savedIdx === null) {
+          const pk = progressKey();
+          const saved = pk ? parseInt(lsGet(pk) || '0', 10) : 0;
+          savedIdx = Number.isFinite(saved) ? saved : 0;
+        }
+
+        idx = Number.isFinite(savedIdx) ? savedIdx : 0;
+        await render();
+      }
+
+      prevBtn.addEventListener('click', () => { idx -= 1; void render(); });
+      nextBtn.addEventListener('click', () => { idx += 1; void render(); });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.repeat) return;
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          idx -= 1;
+          void render();
+        }
+        if (e.key === 'ArrowRight') {
+          e.preventDefault();
+          idx += 1;
+          void render();
+        }
+      });
+
+      loadCbz().catch((err) => {
+        console.error(err);
+        setStatus('Failed to open CBZ');
+      });
+    </script>
+  </body>
+</html>

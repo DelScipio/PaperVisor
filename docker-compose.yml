@@ -1,0 +1,27 @@
+services:
+  papervisor:
+    image: pmmsoares/papervisor:latest
+    container_name: papervisor
+    restart: unless-stopped
+    ports:
+      - "7771:7771"
+    environment:
+      # Required for session storage; change this.
+      PAPERVISOR_STORAGE_SECRET: "change-me"
+
+      # Unraid-friendly data locations (mounted via /data below)
+      PAPERVISOR_DB_PATH: "/data/papervisor.db"
+      PAPERVISOR_LIBRARY_DIR: "/data/files"
+
+      # Optional: run Alembic migrations on startup.
+      # Recommended for first boot and after upgrades. Set to "0" to disable.
+      PAPERVISOR_RUN_MIGRATIONS: "1"
+
+      # Optional overrides (defaults are already Docker-friendly)
+      PAPERVISOR_HOST: "0.0.0.0"
+      PAPERVISOR_PORT: "7771"
+      PAPERVISOR_RELOAD: "0"
+
+    volumes:
+      # Single host folder for all app data (DB + files)
+      - /mnt/user/appdata/papervisor:/data

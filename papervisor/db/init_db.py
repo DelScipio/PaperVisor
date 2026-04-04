@@ -53,6 +53,15 @@ def _is_fresh_database() -> bool:
     return len(inspector.get_table_names()) == 0
 
 
+def _has_alembic_version_table() -> bool:
+    """Return True when Alembic bookkeeping table exists."""
+    from papervisor.db.session import engine
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    return 'alembic_version' in set(inspector.get_table_names())
+
+
 def _create_all_and_stamp() -> None:
     """Create every table from models and stamp Alembic to heads."""
     from papervisor.db.base import Base
@@ -102,5 +111,17 @@ def init_db() -> None:
 
     if _is_fresh_database():
         _create_all_and_stamp()
-    else:
-        _run_upgrades()
+        return
+
+    # Recovery path for legacy/externally-created DBs that have tables but
+    # were never stamped by Alembic. Running migrations from base in this
+    # state can fail with "table already exists".
+    if not _has_alembic_version_table():
+        logger.warning(
+            'Database has tables but no alembic_version table; '
+            'bootstrapping schema/state with create_all + Alembic stamp'
+        )
+        _create_all_and_stamp()
+        return
+
+    _run_upgrades()

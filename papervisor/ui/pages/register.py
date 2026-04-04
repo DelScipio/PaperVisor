@@ -7,7 +7,7 @@ from papervisor.auth import login_user
 from papervisor.core.rate_limit import login_limiter
 from papervisor.services.audit_logs import log_event
 from papervisor.services.settings import get_registration_enabled, settings_available
-from papervisor.services.users import create_user
+from papervisor.services.users import bootstrap_registration_open, create_user
 from papervisor.ui.theme import setup_theme
 
 
@@ -23,11 +23,14 @@ def register_page() -> None:
         return
 
     can_persist = settings_available()
-    enabled = bool(get_registration_enabled()) if can_persist else False
+    bootstrap_open = bootstrap_registration_open()
+    enabled = bootstrap_open or (bool(get_registration_enabled()) if can_persist else False)
 
     with ui.column().classes('w-full max-w-md mx-auto px-6 py-10 gap-4'):
         ui.label('Create account').classes('text-2xl font-bold')
         ui.label('Create a new PaperVisor user account.').classes('text-xs pv-text-dimmer')
+        if bootstrap_open:
+            ui.label('No users exist yet. The first account will be created as admin.').classes('text-xs pv-text-dimmer')
 
         if not enabled:
             with ui.card().props('flat bordered').classes('pv-surface w-full'):

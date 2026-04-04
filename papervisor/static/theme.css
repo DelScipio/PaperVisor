@@ -1416,6 +1416,10 @@ body::before {
     color: var(--pv-text) !important;
 }
 
+.pv-login-auth-input .q-field__native {
+    padding-right: 2.35rem !important;
+}
+
 .pv-login-input input:-webkit-autofill,
 .pv-login-input input:-webkit-autofill:hover,
 .pv-login-input input:-webkit-autofill:focus {

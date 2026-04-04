@@ -50,6 +50,16 @@ An Unraid-friendly compose file is included: [`docker-compose.yml`](docker-compo
 ```bash
 docker compose up -d
 ```
+
+**Default Login Credentials**
+- There is **no built-in default username/password**.
+- If no users exist yet, `/register` is available and the first created account is automatically granted admin privileges.
+- For a brand-new install, create the first admin user at startup by setting:
+  - `PAPERVISOR_CREATE_DEFAULT_ADMIN=1`
+  - `PAPERVISOR_DEFAULT_ADMIN_USERNAME=<your_admin_username>`
+  - `PAPERVISOR_DEFAULT_ADMIN_PASSWORD=<your_admin_password>`
+- This bootstrap admin is only created when the database has no users.
+
 Then navigate to `http://localhost:8080`.
 
 **Standard Docker Run**

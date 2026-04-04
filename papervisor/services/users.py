@@ -139,11 +139,25 @@ def create_user(*, username: str, password: str, is_admin: bool = False) -> User
         if existing is not None:
             raise ValidationException('Username already exists')
 
-        row = User(username=u, password_hash=hash_password(str(password)), is_admin=bool(is_admin))
+        # Safety bootstrap: if this is the first account in the database,
+        # always grant admin so the instance is manageable.
+        existing_user_count = int(session.scalar(select(func.count()).select_from(User)) or 0)
+        effective_is_admin = bool(is_admin) or existing_user_count == 0
+
+        row = User(username=u, password_hash=hash_password(str(password)), is_admin=effective_is_admin)
         session.add(row)
         session.commit()
         session.refresh(row)
         return _to_item(row)
+
+
+def bootstrap_registration_open() -> bool:
+    """Return True when no users exist yet (first-user bootstrap mode)."""
+
+    try:
+        return count_users() == 0
+    except Exception:
+        return False
 
 
 def set_password(*, user_id: int, new_password: str) -> None:

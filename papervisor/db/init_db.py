@@ -62,6 +62,33 @@ def _has_alembic_version_table() -> bool:
     return 'alembic_version' in set(inspector.get_table_names())
 
 
+def _has_user_tables_excluding_alembic_version() -> bool:
+    """Return True when user schema tables exist (excluding alembic_version)."""
+    from papervisor.db.session import engine
+    from sqlalchemy import inspect
+
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    table_names.discard('alembic_version')
+    return len(table_names) > 0
+
+
+def _alembic_version_has_rows() -> bool:
+    """Return True when alembic_version contains at least one revision row."""
+    from papervisor.db.session import engine
+
+    if not _has_alembic_version_table():
+        return False
+
+    try:
+        with engine.connect() as conn:
+            row_count = conn.exec_driver_sql('SELECT COUNT(*) FROM alembic_version').scalar()
+        return int(row_count or 0) > 0
+    except Exception:
+        logger.warning('Could not inspect alembic_version rows', exc_info=True)
+        return False
+
+
 def _should_bootstrap_schema() -> bool:
     """Return True when startup should use model bootstrap + Alembic stamp.
 
@@ -109,6 +136,17 @@ def _run_upgrades() -> None:
     try:
         cfg = _get_alembic_cfg()
         if cfg is None:
+            return
+
+        # Recovery path for interrupted bootstrap/reload races:
+        # schema tables exist but alembic_version has no revision row yet.
+        if _has_alembic_version_table() and not _alembic_version_has_rows() and _has_user_tables_excluding_alembic_version():
+            logger.warning(
+                'Detected non-empty schema with empty alembic_version; '
+                'stamping to heads to recover migration state'
+            )
+            command.stamp(cfg, 'heads')
+            logger.info('Alembic stamped to heads')
             return
 
         logger.info('Applying pending Alembic migrations …')

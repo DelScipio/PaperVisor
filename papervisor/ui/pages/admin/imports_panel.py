@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any, cast
+
 from nicegui import ui
 
 from papervisor.services.db_importer import get_import_report, run_import_queue
@@ -8,8 +10,9 @@ from papervisor.services.db_importer import get_import_report, run_import_queue
 def render_imports_panel() -> None:
     @ui.refreshable
     def _render_content() -> None:
-        report = get_import_report(limit=50)
-        config = report.get('config') or {}
+        report = cast(dict[str, Any], get_import_report(limit=50))
+        config_raw = report.get('config')
+        config = config_raw if isinstance(config_raw, dict) else {}
         import_dir = str(config.get('import_dir') or '-')
 
         with ui.card().props('flat bordered').classes('pv-dialog-card w-full'):
@@ -19,8 +22,9 @@ def render_imports_panel() -> None:
 
             with ui.row().classes('w-full gap-2 pt-2'):
                 def _run(dry_run: bool, force: bool) -> None:
-                    result = run_import_queue(dry_run=dry_run, force=force)
-                    run_info = result.get('run') or {}
+                    result = cast(dict[str, Any], run_import_queue(dry_run=dry_run, force=force))
+                    run_info_raw = result.get('run')
+                    run_info = run_info_raw if isinstance(run_info_raw, dict) else {}
                     processed = int(run_info.get('processed_files') or 0)
                     imported = int(run_info.get('imported_databases') or 0)
                     mode = 'dry run' if dry_run else 'import run'
@@ -49,7 +53,8 @@ def render_imports_panel() -> None:
             else:
                 ui.label('No imports have run yet.').classes('text-sm pv-text-dimmer')
 
-        history = report.get('history') if isinstance(report.get('history'), list) else []
+        history_raw = report.get('history')
+        history: list[dict[str, Any]] = [row for row in history_raw if isinstance(row, dict)] if isinstance(history_raw, list) else []
         with ui.card().props('flat bordered').classes('pv-dialog-card w-full'):
             ui.label('Recent History').classes('text-sm font-semibold')
             if history:

@@ -6,6 +6,7 @@ from papervisor.auth import login_user, logout_user
 from papervisor.core.rate_limit import login_limiter
 from papervisor.services.audit_logs import log_event
 from papervisor.services.settings import get_registration_enabled, settings_available
+from papervisor.services.users import bootstrap_registration_open
 from papervisor.services.users import authenticate
 from papervisor.ui.theme import setup_theme
 
@@ -87,7 +88,7 @@ def login_page() -> None:
 
                 ui.button('Login', on_click=_submit).props('color=primary').classes('w-full')
 
-                can_register = settings_available() and bool(get_registration_enabled())
+                can_register = bootstrap_registration_open() or (settings_available() and bool(get_registration_enabled()))
                 if can_register:
                     ui.button('Create account', on_click=lambda: ui.navigate.to('/register')).props('flat').classes('w-full')
 

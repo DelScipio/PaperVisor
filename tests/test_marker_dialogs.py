@@ -46,6 +46,43 @@ def test_ensure_v2_query_sanitizes_legacy_rule_payload() -> None:
     assert rule['value'] == ['AI']
 
 
+def test_ensure_v2_query_sanitizes_legacy_marker_rule_payload() -> None:
+    query = _ensure_v2_query({'field': 'Markers', 'operator': 'includes_any', 'value': 'marker-1'})
+
+    root = query['root']
+    assert root['type'] == 'group'
+    assert len(root['children']) == 1
+
+    rule = root['children'][0]
+    assert rule['field'] == 'markers'
+    assert rule['operator'] == 'includes_any'
+    assert rule['value'] == ['marker-1']
+
+
+def test_ensure_v2_query_empty_operator_resets_marker_value() -> None:
+    query = _ensure_v2_query(
+        {
+            'version': 2,
+            'root': {
+                'type': 'group',
+                'children': [
+                    {
+                        'type': 'rule',
+                        'field': 'markers',
+                        'operator': 'empty',
+                        'value': ['marker-1', 'marker-2'],
+                    }
+                ],
+            },
+        }
+    )
+
+    rule = query['root']['children'][0]
+    assert rule['field'] == 'markers'
+    assert rule['operator'] == 'empty'
+    assert rule['value'] == []
+
+
 def test_ensure_v2_query_normalizes_invalid_field_and_operator() -> None:
     query = _ensure_v2_query(
         {

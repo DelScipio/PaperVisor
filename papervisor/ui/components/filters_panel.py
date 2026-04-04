@@ -97,6 +97,8 @@ def filters_panel(
         state['filters_has_isbn'] = '0'
         state['filters_completed_only'] = '0'
         state['filters_missing_id'] = '0'
+        state['filters_no_tags'] = '0'
+        state['filters_no_markers'] = '0'
         state['filters_tag_names'] = '[]'
         state['filters_marker_ids'] = '[]'
         state['filters_authors'] = '[]'
@@ -122,6 +124,8 @@ def filters_panel(
         'filters_has_isbn': '0',
         'filters_completed_only': '0',
         'filters_missing_id': '0',
+        'filters_no_tags': '0',
+        'filters_no_markers': '0',
         'filters_tag_names': '[]',
         'filters_marker_ids': '[]',
         'filters_authors': '[]',
@@ -560,11 +564,19 @@ def filters_panel(
                 ).props('outlined dense use-chips').classes('w-full')
 
         # ─────────────────────────────────────────────────────────────────────
-        # MARKERS FILTER (hide in marker view since already filtered)
+        # MARKERS FILTER (hide only in marker view since already filtered)
         # ─────────────────────────────────────────────────────────────────────
 
         v = str(view or '').strip().lower()
-        if v not in {'marker', 'dashboard'}:
+
+        def on_no_markers_change(e) -> None:
+            val = bool(getattr(e, 'value', False))
+            set_bool('filters_no_markers', val)
+            if val:
+                set_json_list('filters_marker_ids', [])
+            trigger_change()
+
+        if v != 'marker':
             marker_options: dict[str, str] = {}
             try:
                 for s in markers or []:
@@ -581,6 +593,8 @@ def filters_panel(
                     if isinstance(val, str):
                         val = [val] if val else []
                     set_json_list('filters_marker_ids', val)
+                    if val:
+                        set_bool('filters_no_markers', False)
                     # marker_ids is the canonical persisted filter
                     trigger_change()
 
@@ -603,6 +617,8 @@ def filters_panel(
                 if isinstance(val, str):
                     val = [val] if val else []
                 set_json_list('filters_tag_names', val)
+                if val:
+                    set_bool('filters_no_tags', False)
                 trigger_change()
 
             ui.select(
@@ -612,6 +628,33 @@ def filters_panel(
                 multiple=True,
                 on_change=on_tags_change,
             ).props('outlined dense use-chips').classes('w-full')
+
+        def on_no_tags_change(e) -> None:
+            val = bool(getattr(e, 'value', False))
+            set_bool('filters_no_tags', val)
+            if val:
+                set_json_list('filters_tag_names', [])
+            trigger_change()
+
+        if v != 'marker':
+            with ui.row().classes('w-full gap-2 items-center no-wrap'):
+                ui.checkbox(
+                    'No marker',
+                    value=get_bool('filters_no_markers'),
+                    on_change=on_no_markers_change,
+                ).props('dense').classes('flex-1 min-w-0')
+
+                ui.checkbox(
+                    'No tags',
+                    value=get_bool('filters_no_tags'),
+                    on_change=on_no_tags_change,
+                ).props('dense').classes('flex-1 min-w-0')
+        else:
+            ui.checkbox(
+                'No tags',
+                value=get_bool('filters_no_tags'),
+                on_change=on_no_tags_change,
+            ).props('dense').classes('w-full')
 
         # ─────────────────────────────────────────────────────────────────────
         # FACET FILTERS (Author, Publisher, etc.)

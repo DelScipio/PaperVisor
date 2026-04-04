@@ -61,6 +61,8 @@ class PageState:
     filters_has_doi: bool = False
     filters_has_isbn: bool = False
     filters_missing_id: bool = False
+    filters_no_tags: bool = False
+    filters_no_markers: bool = False
     filters_completed_only: bool = False
     filters_tag_names: list[str] = field(default_factory=list)
     filters_marker_ids: list[str] = field(default_factory=list)
@@ -102,6 +104,7 @@ class PageState:
             self.filters_library_ids = []
         if view in {'marker', 'dashboard'}:
             self.filters_marker_ids = []
+            self.filters_no_markers = False
 
     def restore_from_search(self) -> None:
         """Return to the view that was active before search."""
@@ -146,6 +149,8 @@ class PageState:
             has_doi=self.filters_has_doi,
             has_isbn=self.filters_has_isbn,
             missing_id=self.filters_missing_id,
+            no_tags=self.filters_no_tags,
+            no_markers=self.filters_no_markers,
             completed_only=self.filters_completed_only,
             tag_names=list(self.filters_tag_names) if self.filters_tag_names else None,
             marker_ids=list(self.filters_marker_ids) if self.filters_marker_ids else None,

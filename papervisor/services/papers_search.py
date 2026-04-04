@@ -43,6 +43,8 @@ class PaperFilters:
     has_doi: bool = False
     has_isbn: bool = False
     missing_id: bool = False
+    no_tags: bool = False
+    no_markers: bool = False
     completed_only: bool = False
     tag_names: list[str] | None = None
     marker_ids: list[str] | None = None
@@ -555,27 +557,43 @@ def _apply_paper_filters(
     if bool(f.completed_only):
         stmt = stmt.where(Paper.is_completed.is_(True))
 
-    tag_names = _norm_list(f.tag_names)
-    if tag_names:
-        tag_lc = [t.lower() for t in tag_names]
-        tag_match = exists(
-            select(1)
-            .select_from(PaperTag)
-            .join(Tag, Tag.id == PaperTag.tag_id)
-            .where(PaperTag.paper_id == Paper.id)
-            .where(func.lower(func.coalesce(Tag.name, '')).in_(tag_lc))
-        )
-        stmt = stmt.where(tag_match)
+    tag_any_match = exists(
+        select(1)
+        .select_from(PaperTag)
+        .where(PaperTag.paper_id == Paper.id)
+    )
+    if bool(f.no_tags):
+        stmt = stmt.where(~tag_any_match)
+    else:
+        tag_names = _norm_list(f.tag_names)
+        if tag_names:
+            tag_lc = [t.lower() for t in tag_names]
+            tag_match = exists(
+                select(1)
+                .select_from(PaperTag)
+                .join(Tag, Tag.id == PaperTag.tag_id)
+                .where(PaperTag.paper_id == Paper.id)
+                .where(func.lower(func.coalesce(Tag.name, '')).in_(tag_lc))
+            )
+            stmt = stmt.where(tag_match)
 
-    marker_ids = _norm_list(f.marker_ids)
-    if marker_ids:
-        marker_match = exists(
-            select(1)
-            .select_from(PaperMarker)
-            .where(PaperMarker.paper_id == Paper.id)
-            .where(PaperMarker.marker_id.in_(marker_ids))
-        )
-        stmt = stmt.where(marker_match)
+    marker_any_match = exists(
+        select(1)
+        .select_from(PaperMarker)
+        .where(PaperMarker.paper_id == Paper.id)
+    )
+    if bool(f.no_markers):
+        stmt = stmt.where(~marker_any_match)
+    else:
+        marker_ids = _norm_list(f.marker_ids)
+        if marker_ids:
+            marker_match = exists(
+                select(1)
+                .select_from(PaperMarker)
+                .where(PaperMarker.paper_id == Paper.id)
+                .where(PaperMarker.marker_id.in_(marker_ids))
+            )
+            stmt = stmt.where(marker_match)
 
     year_min = f.year_min
     year_max = f.year_max

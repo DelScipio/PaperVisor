@@ -7,7 +7,7 @@ from typing import Any
 from nicegui import ui
 
 from papervisor.domain import MarkerItem
-from papervisor.services.markers import create_marker, delete_marker, get_marker, update_marker
+from papervisor.services.markers import create_marker, delete_marker, get_marker, list_markers, update_marker
 from papervisor.services.tags import list_tags
 from papervisor.ui.components.dialog_card import dialog_card
 from papervisor.ui.components.dialog_sections import dialog_actions_row, dialog_header
@@ -21,6 +21,7 @@ FIELD_OPTIONS: dict[FieldKey, str] = {
     'title': 'Title',
     'authors': 'Authors',
     'tags': 'Tags',
+    'markers': 'Markers',
     'publisher': 'Publisher',
     'journal': 'Journal',
     'language': 'Language',
@@ -76,7 +77,7 @@ def _normalize_field(value: Any, *, fallback: str = 'title') -> str:
 
 def _ops_for_field(field: str) -> dict[OperatorKey, str]:
     f = str(field or '').strip().lower()
-    if f == 'tags':
+    if f in {'tags', 'markers'}:
         return OPS_TAGS
     if f in {'file_type'}:
         return OPS_EXACT
@@ -84,7 +85,7 @@ def _ops_for_field(field: str) -> dict[OperatorKey, str]:
 
 
 def _default_value_for_field(field: str) -> Any:
-    return [] if str(field or '').strip().lower() == 'tags' else ''
+    return [] if str(field or '').strip().lower() in {'tags', 'markers'} else ''
 
 
 def _new_rule(field: str = 'title') -> dict[str, Any]:
@@ -105,7 +106,7 @@ def _normalize_rule_value(*, field: str, operator: str, value: Any) -> Any:
     if operator in {'empty', 'not_empty'}:
         return _default_value_for_field(field)
 
-    if field == 'tags':
+    if field in {'tags', 'markers'}:
         raw_values: list[Any]
         if isinstance(value, list):
             raw_values = value
@@ -404,6 +405,20 @@ class MarkerDialogs:
         except Exception:
             tag_options = []
 
+        try:
+            marker_rows = list_markers(user_id=self._user_id)
+        except Exception:
+            marker_rows = []
+
+        marker_options: dict[str, str] = {}
+        for row in marker_rows:
+            if bool(getattr(row, 'is_smart', False)):
+                continue
+            marker_id = str(getattr(row, 'id', '') or '').strip()
+            marker_name = str(getattr(row, 'name', '') or marker_id).strip()
+            if marker_id:
+                marker_options[marker_id] = marker_name
+
         @ui.refreshable
         def render_builder() -> None:
             root = query_state['root']
@@ -487,9 +502,14 @@ class MarkerDialogs:
                                 active_field = _normalize_field(node.get('field'))
                                 if active_operator in {'empty', 'not_empty'}:
                                     ui.input(value='No value required').props('outlined dense readonly').classes('flex-1')
-                                elif active_field == 'tags':
+                                elif active_field in {'tags', 'markers'}:
                                     tag_values = node.get('value') if isinstance(node.get('value'), list) else []
-                                    tags_in = ui.select(tag_options, value=tag_values, multiple=True).props('outlined dense use-chips use-input new-value-mode=add input-debounce=0').classes('flex-1')
+                                    options = tag_options if active_field == 'tags' else marker_options
+                                    allow_new = active_field == 'tags'
+                                    input_props = 'outlined dense use-chips'
+                                    if allow_new:
+                                        input_props += ' use-input new-value-mode=add input-debounce=0'
+                                    tags_in = ui.select(options, value=tag_values, multiple=True).props(input_props).classes('flex-1')
                                     tags_in.bind_value(node, 'value')
                                 else:
                                     val_in = ui.input(value=str(node.get('value') or '')).props('outlined dense clearable').classes('flex-1')

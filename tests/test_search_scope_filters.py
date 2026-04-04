@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from papervisor.db.base import Base
-from papervisor.db.models import Paper, PaperTag, Tag
+from papervisor.db.models import Marker, Paper, PaperMarker, PaperTag, Tag
 from papervisor.services import papers_search
 
 
@@ -71,4 +71,84 @@ def test_search_scope_title_only_and_label_mode(monkeypatch) -> None:
     rows = papers_search.list_papers_filtered(query='large language', mode='Title', user_id=None, limit=50)
 
     assert [row.id for row in rows] == ['paper-title-match']
+    engine.dispose()
+
+
+def test_filter_no_tags_only_returns_untagged_papers(monkeypatch) -> None:
+    engine, SessionLocal = _setup_in_memory_db()
+    monkeypatch.setattr(papers_search, 'get_session', SessionLocal)
+
+    with SessionLocal.begin() as session:
+        session.add_all(
+            [
+                Paper(
+                    id='paper-no-tags',
+                    title='No Tags',
+                    subtitle='',
+                    file_type='paper',
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                ),
+                Paper(
+                    id='paper-with-tags',
+                    title='With Tags',
+                    subtitle='',
+                    file_type='paper',
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                ),
+            ]
+        )
+        session.add(Tag(id=2001, name='AI'))
+        session.add(PaperTag(paper_id='paper-with-tags', tag_id=2001))
+
+    rows = papers_search.list_papers_filtered(
+        query=None,
+        mode='all',
+        user_id=None,
+        filters=papers_search.PaperFilters(no_tags=True),
+        limit=50,
+    )
+
+    assert [row.id for row in rows] == ['paper-no-tags']
+    engine.dispose()
+
+
+def test_filter_no_markers_only_returns_unmarked_papers(monkeypatch) -> None:
+    engine, SessionLocal = _setup_in_memory_db()
+    monkeypatch.setattr(papers_search, 'get_session', SessionLocal)
+
+    with SessionLocal.begin() as session:
+        session.add_all(
+            [
+                Paper(
+                    id='paper-no-markers',
+                    title='No Markers',
+                    subtitle='',
+                    file_type='paper',
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                ),
+                Paper(
+                    id='paper-with-markers',
+                    title='With Markers',
+                    subtitle='',
+                    file_type='paper',
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                ),
+            ]
+        )
+        session.add(Marker(id='m-1', name='Research', icon='category', is_smart=False, scope='all', rules_json=''))
+        session.add(PaperMarker(paper_id='paper-with-markers', marker_id='m-1'))
+
+    rows = papers_search.list_papers_filtered(
+        query=None,
+        mode='all',
+        user_id=None,
+        filters=papers_search.PaperFilters(no_markers=True),
+        limit=50,
+    )
+
+    assert [row.id for row in rows] == ['paper-no-markers']
     engine.dispose()

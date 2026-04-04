@@ -96,7 +96,17 @@ def list_marker_papers_filtered(
             stmt = stmt.where(Paper.is_completed.is_(True))
 
         tag_names = _norm_list(getattr(f, 'tag_names', None))
-        if tag_names:
+        no_tags = bool(getattr(f, 'no_tags', False))
+        if no_tags:
+            stmt = stmt.where(
+                ~exists(
+                    select(1)
+                    .select_from(PaperTag)
+                    .where(PaperTag.paper_id == Paper.id)
+                )
+            )
+            tag_names = []
+        elif tag_names:
             tag_lc = [t.lower() for t in tag_names]
             stmt = (
                 stmt.join(PaperTag, PaperTag.paper_id == Paper.id)
@@ -105,7 +115,17 @@ def list_marker_papers_filtered(
             )
 
         marker_ids = _norm_list(getattr(f, 'marker_ids', None))
-        if marker_ids:
+        no_markers = bool(getattr(f, 'no_markers', False))
+        if no_markers:
+            stmt = stmt.where(
+                ~exists(
+                    select(1)
+                    .select_from(PaperMarker)
+                    .where(PaperMarker.paper_id == Paper.id)
+                )
+            )
+            marker_ids = []
+        elif marker_ids:
             stmt = stmt.join(PaperMarker, PaperMarker.paper_id == Paper.id).where(PaperMarker.marker_id.in_(marker_ids))
 
         year_min = getattr(f, 'year_min', None)
@@ -153,6 +173,8 @@ def list_marker_papers_filtered(
         if (
             tag_names
             or marker_ids
+            or no_tags
+            or no_markers
             or authors
             or journals
             or publishers
@@ -748,6 +770,35 @@ def _apply_smart_marker_filters(
                 .join(Tag, Tag.id == PaperTag.tag_id)
                 .where(PaperTag.paper_id == Paper.id)
                 .where(Tag.name.in_(values))
+            )
+
+        if field == 'markers':
+            values = _normalize_list(value if isinstance(value, list) else ([value] if isinstance(value, str) else None))
+            if op in {'empty', 'is_empty'}:
+                return ~exists(select(1).select_from(PaperMarker).where(PaperMarker.paper_id == Paper.id))
+            if op in {'not_empty', 'is_not_empty'}:
+                return exists(select(1).select_from(PaperMarker).where(PaperMarker.paper_id == Paper.id))
+            if not values:
+                return None
+
+            if op in {'includes_all', 'all'}:
+                return and_(
+                    *[
+                        exists(
+                            select(1)
+                            .select_from(PaperMarker)
+                            .where(PaperMarker.paper_id == Paper.id)
+                            .where(PaperMarker.marker_id == v)
+                        )
+                        for v in values
+                    ]
+                )
+
+            return exists(
+                select(1)
+                .select_from(PaperMarker)
+                .where(PaperMarker.paper_id == Paper.id)
+                .where(PaperMarker.marker_id.in_(values))
             )
 
         # Field mapping (text columns)

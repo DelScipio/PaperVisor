@@ -248,6 +248,32 @@ def index() -> None:
     apply_nav_collapsed_flags_attr(state=state, flags=collapsed)
 
     def open_metadata(paper: PaperItem) -> None:
+        pid = str(getattr(paper, 'id', '') or '').strip()
+        if pid:
+            ui.run_javascript(
+                f"""
+(function(){{
+    const current = '{pid}';
+    const el = document.getElementById('pv_kb_info');
+    if (el) el.dataset.paperId = current;
+    window._pvMetaPaperId = current;
+
+    const rows = Array.from(document.querySelectorAll('.pv-poster[id^="pv_poster_"], .pv-list-row[data-paper-id]'));
+    let idx = -1;
+    for (let i = rows.length - 1; i >= 0; i--) {{
+        const row = rows[i];
+        const rid = row.classList.contains('pv-poster')
+            ? String((row.id || '').replace('pv_poster_', ''))
+            : String((row.dataset && row.dataset.paperId) || '');
+        if (rid === current) {{
+            idx = i;
+            break;
+        }}
+    }}
+    window._pvKbIdx = idx;
+}})();
+                """
+            )
         row = get_paper(paper_id=paper.id)
         if row is None:
             ui.notify('Item not found', color='warning')
@@ -480,50 +506,56 @@ def index() -> None:
         kb_fav_btn = ui.button('', on_click=lambda _e=None: None).props('id=pv_kb_fav').style('display:none')
         kb_search_btn = ui.button('', on_click=lambda _e=None: None).props('id=pv_kb_search').style('display:none')
 
-        def _kb_action_on_selected(action: str) -> None:
-            async def _do() -> None:
-                pid = await ui.run_javascript(
-                    "document.getElementById('pv_kb_info')?.dataset?.paperId || ''"
-                )
-                pid = str(pid or '').strip()
-                if not pid:
-                    return
+        async def _kb_action_on_selected(action: str) -> None:
+            pid = await ui.run_javascript(
+                "document.getElementById('pv_kb_info')?.dataset?.paperId || ''"
+            )
+            pid = str(pid or '').strip()
+            if not pid:
+                return
+            try:
+                paper_row = get_paper(paper_id=pid)
+            except Exception:
+                paper_row = None
+            if paper_row is None:
+                return
+
+            paper_item = PaperItem(
+                id=str(paper_row.id),
+                title=str(getattr(paper_row, 'title', '') or ''),
+                subtitle=str(getattr(paper_row, 'subtitle', '') or ''),
+                reading_progress=float(getattr(paper_row, 'reading_progress', 0) or 0),
+                is_completed=bool(getattr(paper_row, 'is_completed', False)),
+                is_favorite=bool(getattr(paper_row, 'is_favorite', False)),
+                is_to_read=bool(getattr(paper_row, 'is_to_read', False)),
+                open_count_total=int(getattr(paper_row, 'open_count_total', 0) or 0),
+                open_count_since_reset=int(getattr(paper_row, 'open_count_since_reset', 0) or 0),
+                file_suffix=str(getattr(paper_row, 'file_suffix', '') or ''),
+            )
+            if action == 'info':
+                open_metadata(paper_item)
+            elif action == 'reader':
+                open_reader(paper_item)
+            elif action == 'fav':
                 try:
-                    paper_row = get_paper(paper_id=pid)
+                    toggle_favorite(paper_id=pid, user_id=user_id)
+                    if 'render_content' in refreshables:
+                        refreshables['render_content'].refresh()
                 except Exception:
-                    paper_row = None
-                if paper_row is None:
-                    return
+                    pass
 
-                paper_item = PaperItem(
-                    id=str(paper_row.id),
-                    title=str(getattr(paper_row, 'title', '') or ''),
-                    subtitle=str(getattr(paper_row, 'subtitle', '') or ''),
-                    reading_progress=float(getattr(paper_row, 'reading_progress', 0) or 0),
-                    is_completed=bool(getattr(paper_row, 'is_completed', False)),
-                    is_favorite=bool(getattr(paper_row, 'is_favorite', False)),
-                    is_to_read=bool(getattr(paper_row, 'is_to_read', False)),
-                    open_count_total=int(getattr(paper_row, 'open_count_total', 0) or 0),
-                    open_count_since_reset=int(getattr(paper_row, 'open_count_since_reset', 0) or 0),
-                    file_suffix=str(getattr(paper_row, 'file_suffix', '') or ''),
-                )
-                if action == 'info':
-                    open_metadata(paper_item)
-                elif action == 'reader':
-                    open_reader(paper_item)
-                elif action == 'fav':
-                    try:
-                        toggle_favorite(paper_id=pid, user_id=user_id)
-                        if 'render_content' in refreshables:
-                            refreshables['render_content'].refresh()
-                    except Exception:
-                        pass
-            import asyncio
-            asyncio.ensure_future(_do())
+        async def _on_kb_info(_e=None) -> None:
+            await _kb_action_on_selected('info')
 
-        kb_info_btn.on('click', lambda _e: _kb_action_on_selected('info'))
-        kb_reader_btn.on('click', lambda _e: _kb_action_on_selected('reader'))
-        kb_fav_btn.on('click', lambda _e: _kb_action_on_selected('fav'))
+        async def _on_kb_reader(_e=None) -> None:
+            await _kb_action_on_selected('reader')
+
+        async def _on_kb_fav(_e=None) -> None:
+            await _kb_action_on_selected('fav')
+
+        kb_info_btn.on('click', _on_kb_info)
+        kb_reader_btn.on('click', _on_kb_reader)
+        kb_fav_btn.on('click', _on_kb_fav)
         kb_search_btn.on('click', lambda _e: ui.run_javascript(
             "document.querySelector('.pv-search-input input')?.focus()"
         ))
@@ -532,21 +564,87 @@ def index() -> None:
     (function(){
         if (window._pvKbInit) return;
         window._pvKbInit = true;
-        window._pvKbInit = -1;
+        window._pvKbIdx = -1;
 
-        function posters() { return Array.from(document.querySelectorAll('.pv-poster')); }
+        function items() {
+            const posterItems = Array.from(document.querySelectorAll('.pv-poster[id^="pv_poster_"]'));
+            if (posterItems.length) return posterItems;
+            return Array.from(document.querySelectorAll('.pv-list-row[data-paper-id]'));
+        }
+
+        function isPoster(el) {
+            return !!(el && el.classList && el.classList.contains('pv-poster'));
+        }
+
+        function paperIdFromItem(el) {
+            if (!el) return '';
+            if (isPoster(el)) return (el.id || '').replace('pv_poster_', '');
+            return (el.dataset && el.dataset.paperId) ? String(el.dataset.paperId) : '';
+        }
+
+        function setCurrentPaperId(pid) {
+            const current = String(pid || '').trim();
+            const el = document.getElementById('pv_kb_info');
+            if (el) el.dataset.paperId = current;
+            window._pvMetaPaperId = current;
+        }
 
         function highlight(idx) {
-            const ps = posters();
-            ps.forEach(p => p.classList.remove('pv-poster--selected'));
-            if (idx >= 0 && idx < ps.length) {
-                ps[idx].classList.add('pv-poster--selected');
-                ps[idx].scrollIntoView({block:'nearest',behavior:'smooth'});
-                const pid = (ps[idx].id || '').replace('pv_poster_','');
-                const el = document.getElementById('pv_kb_info');
-                if (el) el.dataset.paperId = pid;
+            const rows = items();
+            rows.forEach(row => {
+                row.classList.remove('pv-poster--selected');
+                row.classList.remove('pv-list-row--selected');
+            });
+            if (idx >= 0 && idx < rows.length) {
+                const row = rows[idx];
+                if (isPoster(row)) {
+                    row.classList.add('pv-poster--selected');
+                } else {
+                    row.classList.add('pv-list-row--selected');
+                }
+                row.scrollIntoView({block:'nearest',behavior:'smooth'});
+                setCurrentPaperId(paperIdFromItem(row));
             }
             window._pvKbIdx = idx;
+        }
+
+        function isMetadataDialogOpen() {
+            return !!document.querySelector('.q-dialog .pv-meta-dialog-card');
+        }
+
+        function openMetadataForStep(step) {
+            const rows = items();
+            const ids = rows.map(paperIdFromItem).filter(Boolean);
+            if (!ids.length) return;
+
+            const current = String(
+                window._pvMetaPaperId
+                || document.getElementById('pv_kb_info')?.dataset?.paperId
+                || ''
+            ).trim();
+
+            let idx = Number.isInteger(window._pvKbIdx) ? window._pvKbIdx : -1;
+            if (idx < 0 || idx >= ids.length || (current && ids[idx] !== current)) {
+                const last = ids.lastIndexOf(current);
+                idx = last >= 0 ? last : ids.indexOf(current);
+            }
+
+            if (idx < 0) {
+                idx = step >= 0 ? -1 : ids.length;
+            }
+
+            let next = idx + step;
+            while (next >= 0 && next < ids.length && ids[next] === current) {
+                next += step;
+            }
+            if (next < 0 || next >= ids.length) return;
+
+            const nextId = ids[next];
+            if (!nextId) return;
+
+            setCurrentPaperId(nextId);
+            window._pvKbIdx = next;
+            document.getElementById('pv_kb_info')?.click();
         }
 
         document.addEventListener('keydown', function(e) {
@@ -555,10 +653,20 @@ def index() -> None:
                 if (e.key==='Escape') { e.target.blur(); e.preventDefault(); }
                 return;
             }
+            if (isMetadataDialogOpen()) {
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    openMetadataForStep(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    openMetadataForStep(1);
+                }
+                return;
+            }
             if (document.querySelector('.q-dialog')) return;
 
-            const ps = posters();
-            const len = ps.length;
+            const rows = items();
+            const len = rows.length;
             if (!len && e.key!=='/') return;
 
             switch(e.key) {

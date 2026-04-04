@@ -14,7 +14,7 @@ from papervisor.ui.theme import setup_theme
 @ui.page('/login')
 def login_page() -> None:
     setup_theme()
-    ui.query('body').classes('bg-transparent')
+    ui.query('body').classes('bg-transparent pv-login-page')
 
     # If already logged in, go home.
     if app.storage.user.get('user_id'):
@@ -31,11 +31,11 @@ def login_page() -> None:
             with ui.column().classes('w-full gap-3'):
                 # Keep login fields deterministic across browser autofill/credential overlays.
                 auth_field_props = 'outlined dense autocorrect=off autocapitalize=off spellcheck=false'
-                user_in = ui.input('Username').props(f'{auth_field_props} autocomplete=off').classes(
+                user_in = ui.input('Username').props(f'{auth_field_props} autocomplete=username').classes(
                     'w-full pv-login-input pv-login-auth-input'
                 )
                 pass_in = ui.input('Password', password=True, password_toggle_button=True).props(
-                    f'{auth_field_props} autocomplete=new-password'
+                    f'{auth_field_props} autocomplete=current-password'
                 ).classes('w-full pv-login-input pv-login-auth-input')
                 status = ui.label('').classes('text-xs pv-text-dimmer')
 

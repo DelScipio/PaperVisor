@@ -87,13 +87,13 @@ def test_get_api_key_respects_query_key_gate(monkeypatch) -> None:
     assert get_api_key(req) == 'abc123'
 
 
-def test_get_api_key_default_is_disabled(monkeypatch) -> None:
+def test_get_api_key_default_is_enabled(monkeypatch) -> None:
     class _Req:
         def __init__(self) -> None:
             self.query_params = {'key': 'abc123'}
 
     monkeypatch.delenv('PAPERVISOR_OPDS_ALLOW_QUERY_KEY', raising=False)
-    assert get_api_key(_Req()) is None
+    assert get_api_key(_Req()) == 'abc123'
 
 
 def test_opds_rate_limit_key_uses_forwarded_ip_and_username_when_trusted(monkeypatch) -> None:

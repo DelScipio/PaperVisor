@@ -78,18 +78,28 @@ def _render_dashboard_grid(
     open_share_paper,
     on_changed,
 ) -> None:
-    if not papers:
-        return
     with ui.element('section').classes('pv-dashboard-section'):
-        poster_grid(
-            user_id=user_id,
-            title=title,
-            papers=papers,
-            on_open_metadata=open_metadata,
-            on_open_reader=open_reader,
-            on_share_paper=open_share_paper,
-            on_changed=on_changed,
-        )
+        if papers:
+            poster_grid(
+                user_id=user_id,
+                title=title,
+                papers=papers,
+                on_open_metadata=open_metadata,
+                on_open_reader=open_reader,
+                on_share_paper=open_share_paper,
+                on_changed=on_changed,
+            )
+            return
+
+        with ui.row().classes('w-full items-center justify-between px-4 pt-3'):
+            ui.label(title).classes('text-base font-semibold pv-text-dim')
+
+        empty_message = 'No files yet.'
+        if title == 'Continue reading':
+            empty_message = 'Open a file and progress will show up here.'
+        elif title == 'Favorites':
+            empty_message = 'Mark files as favorite to pin them here.'
+        inline_empty_state(empty_message)
 
 
 def _render_dashboard_primary_sections(

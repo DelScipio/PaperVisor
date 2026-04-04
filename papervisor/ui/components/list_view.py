@@ -47,6 +47,7 @@ class PaperRow(ui.row):
         row_classes = 'pv-list-row' + (' pv-list-row--selected' if self.is_selected else '')
 
         self.classes(row_classes).classes('group flex-nowrap')
+        self.props(f'data-paper-id={self.paper.id}')
 
         with self:
             # Batch-select checkbox (only in select mode)

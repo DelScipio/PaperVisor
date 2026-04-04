@@ -23,7 +23,6 @@ from papervisor.ui.pages.admin.maintenance_panel import render_maintenance_panel
 from papervisor.ui.pages.admin.opds_panel import render_opds_panel
 from papervisor.ui.pages.admin.patterns_panel import render_patterns_panel
 from papervisor.ui.pages.admin.logs_panel import render_logs_panel
-from papervisor.ui.pages.admin.imports_panel import render_imports_panel
 from papervisor.ui.pages.admin.users_panel import render_users_panel
 from papervisor.ui.pages.shared_state import (
     apply_nav_collapsed_flags_dict,
@@ -53,7 +52,7 @@ def admin() -> None:
             for key in panel_loading:
                 panel_loading[key] = True
             # Refresh bodies if they exist
-            for key in ['patterns', 'library', 'global_libs', 'maintenance', 'opds', 'api', 'users', 'logs', 'imports']:
+            for key in ['patterns', 'library', 'global_libs', 'maintenance', 'opds', 'api', 'users', 'logs']:
                 fn_name = f'render_{key}_body'
                 if fn_name in refreshables:
                     refreshables[fn_name].refresh()
@@ -82,7 +81,6 @@ def admin() -> None:
         'api': True,
         'users': True,
         'logs': True,
-        'imports': True,
     }
     collapsed = load_nav_collapsed_flags(user_id=user_id)
     apply_nav_collapsed_flags_dict(state=state, flags=collapsed)
@@ -199,7 +197,6 @@ def admin() -> None:
                         ui.tab('API', icon='key').props('inline-label')
                         ui.tab('Users', icon='group').props('inline-label')
                         ui.tab('Logs', icon='receipt_long').props('inline-label')
-                        ui.tab('Imports', icon='database').props('inline-label')
                     tabs.value = 'Patterns'
 
             with ui.tab_panels(tabs).props('animated=false transition-prev=none transition-next=none keep-alive').classes('w-full pv-profile-tab-panels'):
@@ -342,18 +339,3 @@ def admin() -> None:
 
                     render_logs_body()
                     refreshables['render_logs_body'] = render_logs_body
-
-                with ui.tab_panel('Imports').classes('p-0'):
-                    @ui.refreshable
-                    def render_imports_body() -> None:
-                        if show_initial_panel_loading(
-                            panel_loading=panel_loading,
-                            key='imports',
-                            message='Loading import queue…',
-                            refresh=render_imports_body.refresh,
-                        ):
-                            return
-                        render_imports_panel()
-
-                    render_imports_body()
-                    refreshables['render_imports_body'] = render_imports_body

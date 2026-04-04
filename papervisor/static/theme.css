@@ -1416,8 +1416,12 @@ body::before {
     color: var(--pv-text) !important;
 }
 
+.pv-login-auth-input .q-field__control-container {
+    position: relative;
+}
+
 .pv-login-auth-input .q-field__native {
-    padding-right: 2.35rem !important;
+    padding-right: 2.6rem !important;
 }
 
 .pv-login-auth-input input::-webkit-credentials-auto-fill-button,
@@ -1425,6 +1429,27 @@ body::before {
     visibility: hidden !important;
     display: none !important;
     pointer-events: none !important;
+}
+
+/* Password-manager fallback: keep injected Bitwarden button visible and right-aligned. */
+.pv-login-page .pv-login-auth-input [class*='bitwarden' i],
+.pv-login-page .pv-login-auth-input [id*='bitwarden' i],
+.pv-login-page .pv-login-auth-input [data-testid*='bitwarden' i],
+.pv-login-page .pv-login-auth-input [data-brand='bitwarden'] {
+    position: absolute !important;
+    right: 0.55rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    margin: 0 !important;
+    z-index: 3 !important;
+    opacity: 0.96;
+}
+
+.pv-login-page .pv-login-auth-input [class*='bitwarden' i] svg,
+.pv-login-page .pv-login-auth-input [id*='bitwarden' i] svg,
+.pv-login-page .pv-login-auth-input [data-testid*='bitwarden' i] svg,
+.pv-login-page .pv-login-auth-input [data-brand='bitwarden'] svg {
+    filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.35));
 }
 
 .pv-login-input input:-webkit-autofill,

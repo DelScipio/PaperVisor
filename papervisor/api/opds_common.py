@@ -62,9 +62,9 @@ def _allow_query_api_key() -> bool:
     """Return ``True`` when OPDS ``?key=...`` auth is allowed.
 
     Controlled by ``PAPERVISOR_OPDS_ALLOW_QUERY_KEY``.
-    Defaults to **False** to reduce accidental credential leakage in URLs.
+    Defaults to **True** so profile-provided OPDS URLs work out of the box.
     """
-    val = str(os.environ.get('PAPERVISOR_OPDS_ALLOW_QUERY_KEY', '0')).strip().lower()
+    val = str(os.environ.get('PAPERVISOR_OPDS_ALLOW_QUERY_KEY', '1')).strip().lower()
     return val in {'1', 'true', 'yes', 'on'}
 
 

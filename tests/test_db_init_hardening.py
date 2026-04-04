@@ -39,14 +39,34 @@ def test_run_upgrades_can_continue_when_override_enabled(monkeypatch) -> None:
     db_init._run_upgrades()
 
 
+def test_should_bootstrap_schema_for_fresh_db(monkeypatch) -> None:
+    monkeypatch.setattr(db_init, '_is_fresh_database', lambda: True)
+    monkeypatch.setattr(db_init, '_has_alembic_version_table', lambda: True)
+
+    assert db_init._should_bootstrap_schema() is True
+
+
+def test_should_bootstrap_schema_for_unversioned_existing_db(monkeypatch) -> None:
+    monkeypatch.setattr(db_init, '_is_fresh_database', lambda: False)
+    monkeypatch.setattr(db_init, '_has_alembic_version_table', lambda: False)
+
+    assert db_init._should_bootstrap_schema() is True
+
+
+def test_should_not_bootstrap_when_versioned_existing_db(monkeypatch) -> None:
+    monkeypatch.setattr(db_init, '_is_fresh_database', lambda: False)
+    monkeypatch.setattr(db_init, '_has_alembic_version_table', lambda: True)
+
+    assert db_init._should_bootstrap_schema() is False
+
+
 def test_init_db_bootstraps_when_tables_exist_without_alembic_version(monkeypatch, tmp_path) -> None:
     monkeypatch.setattr(
         db_init,
         'get_paths',
         lambda: type('P', (), {'database_file': tmp_path / 'papervisor.db', 'library_files_dir': tmp_path / 'files'})(),
     )
-    monkeypatch.setattr(db_init, '_is_fresh_database', lambda: False)
-    monkeypatch.setattr(db_init, '_has_alembic_version_table', lambda: False)
+    monkeypatch.setattr(db_init, '_should_bootstrap_schema', lambda: True)
 
     called = {'create': 0, 'upgrade': 0}
 
@@ -65,8 +85,7 @@ def test_init_db_runs_upgrades_when_alembic_version_exists(monkeypatch, tmp_path
         'get_paths',
         lambda: type('P', (), {'database_file': tmp_path / 'papervisor.db', 'library_files_dir': tmp_path / 'files'})(),
     )
-    monkeypatch.setattr(db_init, '_is_fresh_database', lambda: False)
-    monkeypatch.setattr(db_init, '_has_alembic_version_table', lambda: True)
+    monkeypatch.setattr(db_init, '_should_bootstrap_schema', lambda: False)
 
     called = {'create': 0, 'upgrade': 0}
 

@@ -62,6 +62,27 @@ def _has_alembic_version_table() -> bool:
     return 'alembic_version' in set(inspector.get_table_names())
 
 
+def _should_bootstrap_schema() -> bool:
+    """Return True when startup should use model bootstrap + Alembic stamp.
+
+    This covers both:
+    - brand-new databases (no tables)
+    - existing databases that were never Alembic-versioned
+    """
+
+    if _is_fresh_database():
+        return True
+
+    if not _has_alembic_version_table():
+        logger.warning(
+            'Database has tables but no alembic_version table; '
+            'bootstrapping schema/state with create_all + Alembic stamp'
+        )
+        return True
+
+    return False
+
+
 def _create_all_and_stamp() -> None:
     """Create every table from models and stamp Alembic to heads."""
     from papervisor.db.base import Base
@@ -109,18 +130,7 @@ def init_db() -> None:
     paths.database_file.parent.mkdir(parents=True, exist_ok=True)
     paths.library_files_dir.mkdir(parents=True, exist_ok=True)
 
-    if _is_fresh_database():
-        _create_all_and_stamp()
-        return
-
-    # Recovery path for legacy/externally-created DBs that have tables but
-    # were never stamped by Alembic. Running migrations from base in this
-    # state can fail with "table already exists".
-    if not _has_alembic_version_table():
-        logger.warning(
-            'Database has tables but no alembic_version table; '
-            'bootstrapping schema/state with create_all + Alembic stamp'
-        )
+    if _should_bootstrap_schema():
         _create_all_and_stamp()
         return
 

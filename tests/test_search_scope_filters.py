@@ -152,3 +152,52 @@ def test_filter_no_markers_only_returns_unmarked_papers(monkeypatch) -> None:
 
     assert [row.id for row in rows] == ['paper-no-markers']
     engine.dispose()
+
+
+def test_filter_no_markers_excludes_auto_marker_matches(monkeypatch) -> None:
+    engine, SessionLocal = _setup_in_memory_db()
+    monkeypatch.setattr(papers_search, 'get_session', SessionLocal)
+
+    with SessionLocal.begin() as session:
+        session.add_all(
+            [
+                Paper(
+                    id='paper-smart-match',
+                    title='Auto Match Document',
+                    subtitle='',
+                    file_type='paper',
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                ),
+                Paper(
+                    id='paper-no-marker-at-all',
+                    title='Plain Document',
+                    subtitle='',
+                    file_type='paper',
+                    created_at=datetime.now(timezone.utc),
+                    updated_at=datetime.now(timezone.utc),
+                ),
+            ]
+        )
+
+        session.add(
+            Marker(
+                id='smart-1',
+                name='Auto by title',
+                icon='auto_awesome',
+                is_smart=True,
+                scope='all',
+                rules_json='{"version":2,"root":{"type":"group","op":"and","children":[{"type":"rule","field":"title","operator":"contains","value":"auto match"}]}}',
+            )
+        )
+
+    rows = papers_search.list_papers_filtered(
+        query=None,
+        mode='all',
+        user_id=None,
+        filters=papers_search.PaperFilters(no_markers=True),
+        limit=50,
+    )
+
+    assert [row.id for row in rows] == ['paper-no-marker-at-all']
+    engine.dispose()

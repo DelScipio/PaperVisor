@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import Integer, case, exists, select, true
+from sqlalchemy import Integer, and_, case, exists, select, true
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
@@ -14,6 +14,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from papervisor.db.models import (
     Library,
     LibraryShare,
+    Marker,
     Paper,
     PaperFavorite,
     PaperMarker,
@@ -136,6 +137,181 @@ def _search_scope_clause(*, query: str, mode: str) -> ColumnElement[bool]:
         _like(Paper.keywords),
         tag_match,
     )
+
+
+def _parse_smart_query_v2(raw: str | None) -> dict[str, Any] | None:
+    """Parse v2 smart-marker JSON payload and return a normalized dict."""
+    if not raw:
+        return None
+    try:
+        import json
+
+        data = json.loads(raw)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    if int(data.get('version') or 0) != 2:
+        return None
+    root = data.get('root')
+    if not isinstance(root, dict):
+        return None
+    if str(root.get('type') or '').strip().lower() != 'group':
+        return None
+    return data
+
+
+def _smart_query_clause(root: dict[str, Any]) -> ColumnElement[bool] | None:
+    """Build a SQL clause from a smart-marker rule tree root node."""
+
+    def _is_empty_text(col: Any) -> Any:
+        return func.length(func.trim(func.coalesce(col, ''))) == 0
+
+    def _ci(col: Any) -> Any:
+        return func.lower(func.coalesce(col, ''))
+
+    def _normalize_list(values: list[str] | None) -> list[str]:
+        out: list[str] = []
+        for v in values or []:
+            s = str(v or '').strip()
+            if s:
+                out.append(s)
+        return out
+
+    def _rule_clause(node: dict[str, Any]) -> ColumnElement[bool] | None:
+        field = str(node.get('field') or '').strip().lower()
+        op = str(node.get('operator') or '').strip().lower()
+        value = node.get('value')
+
+        if field == 'tags':
+            values = _normalize_list(value if isinstance(value, list) else ([value] if isinstance(value, str) else None))
+            if op in {'empty', 'is_empty'}:
+                return ~exists(select(1).select_from(PaperTag).where(PaperTag.paper_id == Paper.id))
+            if op in {'not_empty', 'is_not_empty'}:
+                return exists(select(1).select_from(PaperTag).where(PaperTag.paper_id == Paper.id))
+            if not values:
+                return None
+            if op in {'includes_all', 'all'}:
+                return and_(
+                    *[
+                        exists(
+                            select(1)
+                            .select_from(PaperTag)
+                            .join(Tag, Tag.id == PaperTag.tag_id)
+                            .where(PaperTag.paper_id == Paper.id)
+                            .where(Tag.name == v)
+                        )
+                        for v in values
+                    ]
+                )
+            return exists(
+                select(1)
+                .select_from(PaperTag)
+                .join(Tag, Tag.id == PaperTag.tag_id)
+                .where(PaperTag.paper_id == Paper.id)
+                .where(Tag.name.in_(values))
+            )
+
+        if field == 'markers':
+            values = _normalize_list(value if isinstance(value, list) else ([value] if isinstance(value, str) else None))
+            if op in {'empty', 'is_empty'}:
+                return ~exists(select(1).select_from(PaperMarker).where(PaperMarker.paper_id == Paper.id))
+            if op in {'not_empty', 'is_not_empty'}:
+                return exists(select(1).select_from(PaperMarker).where(PaperMarker.paper_id == Paper.id))
+            if not values:
+                return None
+            if op in {'includes_all', 'all'}:
+                return and_(
+                    *[
+                        exists(
+                            select(1)
+                            .select_from(PaperMarker)
+                            .where(PaperMarker.paper_id == Paper.id)
+                            .where(PaperMarker.marker_id == v)
+                        )
+                        for v in values
+                    ]
+                )
+            return exists(
+                select(1)
+                .select_from(PaperMarker)
+                .where(PaperMarker.paper_id == Paper.id)
+                .where(PaperMarker.marker_id.in_(values))
+            )
+
+        text_cols: dict[str, Any] = {
+            'title': Paper.title,
+            'subtitle': Paper.subtitle,
+            'authors': Paper.authors,
+            'publisher': Paper.publisher,
+            'journal': Paper.journal,
+            'doi': Paper.doi,
+            'isbn': Paper.isbn,
+            'language': Paper.language,
+            'genres': Paper.genres,
+            'keywords': Paper.keywords,
+            'year': Paper.published_year,
+            'published_year': Paper.published_year,
+            'file_path': Paper.file_path,
+        }
+        if field in text_cols:
+            col = text_cols[field]
+            if op in {'empty', 'is_empty'}:
+                return _is_empty_text(col)
+            if op in {'not_empty', 'is_not_empty'}:
+                return ~_is_empty_text(col)
+
+            v = str(value or '').strip()
+            if not v:
+                return None
+            if op == 'equals':
+                return _ci(col) == v.lower()
+            if op in {'not_equals', 'neq'}:
+                return _ci(col) != v.lower()
+            if op == 'contains':
+                return _ci(col).like(f'%{v.lower()}%')
+            if op in {'not_contains', 'does_not_contain'}:
+                return ~_ci(col).like(f'%{v.lower()}%')
+            return None
+
+        if field == 'file_type':
+            v = str(value or '').strip().lower()
+            if not v:
+                return None
+            if op in {'not_equals', 'neq'}:
+                return func.lower(func.coalesce(Paper.file_type, '')) != v
+            return func.lower(func.coalesce(Paper.file_type, '')) == v
+
+        if field == 'library_id':
+            v = str(value or '').strip()
+            if not v:
+                return None
+            if op in {'not_equals', 'neq'}:
+                return Paper.library_id != v
+            return Paper.library_id == v
+
+        return None
+
+    def _node_clause(node: Any) -> ColumnElement[bool] | None:
+        if not isinstance(node, dict):
+            return None
+        ntype = str(node.get('type') or '').strip().lower()
+        if ntype == 'rule':
+            return _rule_clause(node)
+        if ntype == 'group':
+            op = str(node.get('op') or 'and').strip().lower()
+            children = node.get('children')
+            if not isinstance(children, list):
+                return None
+            clauses = [c for c in (_node_clause(ch) for ch in children) if c is not None]
+            if not clauses:
+                return None
+            if op == 'or':
+                return or_(*clauses)
+            return and_(*clauses)
+        return None
+
+    return _node_clause(root)
 
 
 def _accessible_library_ids_subquery(*, user_id: int) -> Select[tuple[str]]:
@@ -583,7 +759,28 @@ def _apply_paper_filters(
         .where(PaperMarker.paper_id == Paper.id)
     )
     if bool(f.no_markers):
-        stmt = stmt.where(~marker_any_match)
+        smart_clauses: list[ColumnElement[bool]] = []
+        smart_stmt = select(Marker.rules_json).where(Marker.is_smart.is_(True))
+        if user_id is not None:
+            smart_stmt = smart_stmt.where(or_(Marker.owner_user_id == int(user_id), Marker.visibility == 'global'))
+        with get_session() as session:
+            smart_rules = [str(v or '') for v in session.execute(smart_stmt).scalars().all()]
+
+        for raw_rules in smart_rules:
+            parsed = _parse_smart_query_v2(raw_rules)
+            if not parsed:
+                continue
+            root = parsed.get('root')
+            if not isinstance(root, dict):
+                continue
+            clause = _smart_query_clause(root)
+            if clause is not None:
+                smart_clauses.append(clause)
+
+        if smart_clauses:
+            stmt = stmt.where(~or_(marker_any_match, or_(*smart_clauses)))
+        else:
+            stmt = stmt.where(~marker_any_match)
     else:
         marker_ids = _norm_list(f.marker_ids)
         if marker_ids:

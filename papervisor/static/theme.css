@@ -1420,6 +1420,13 @@ body::before {
     padding-right: 2.35rem !important;
 }
 
+.pv-login-auth-input input::-webkit-credentials-auto-fill-button,
+.pv-login-auth-input input::-webkit-contacts-auto-fill-button {
+    visibility: hidden !important;
+    display: none !important;
+    pointer-events: none !important;
+}
+
 .pv-login-input input:-webkit-autofill,
 .pv-login-input input:-webkit-autofill:hover,
 .pv-login-input input:-webkit-autofill:focus {

@@ -28,16 +28,13 @@ def login_page() -> None:
 
         with ui.card().props('flat bordered').classes('pv-surface w-full'):
             with ui.column().classes('w-full gap-3'):
-                # Prevent browser extension badges from visually colliding with field content.
-                auth_field_props = (
-                    'outlined dense autocorrect=off autocapitalize=off spellcheck=false '
-                    'data-bwignore=true data-lpignore=true data-1p-ignore=true'
-                )
-                user_in = ui.input('Username').props(f'{auth_field_props} autocomplete=username').classes(
+                # Keep login fields deterministic across browser autofill/credential overlays.
+                auth_field_props = 'outlined dense autocorrect=off autocapitalize=off spellcheck=false'
+                user_in = ui.input('Username').props(f'{auth_field_props} autocomplete=off').classes(
                     'w-full pv-login-input pv-login-auth-input'
                 )
                 pass_in = ui.input('Password', password=True, password_toggle_button=True).props(
-                    f'{auth_field_props} autocomplete=current-password'
+                    f'{auth_field_props} autocomplete=new-password'
                 ).classes('w-full pv-login-input pv-login-auth-input')
                 status = ui.label('').classes('text-xs pv-text-dimmer')
 

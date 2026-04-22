@@ -1,0 +1,3 @@
+## 2024-03-24 - [Consolidating Inline Styles to Tailwind Utility Classes]
+**Learning:** Found multiple instances where styling was implemented using inline `style()` declarations (e.g. `font-size`, `-webkit-line-clamp`, `display:none`) instead of native Tailwind `.classes()`. Mixing inline styles with Tailwind creates inconsistency and makes global updates or responsive adjustments more difficult.
+**Action:** All basic CSS properties like font sizes, line clamping, and display toggles should use Tailwind classes (`text-sm`, `line-clamp-5`, `hidden`). Reserve inline `.style()` ONLY for dynamic values that cannot be resolved via Tailwind variables (like calculated percentages for progress bars).

@@ -68,10 +68,10 @@ def top_bar(
     with ui.row().classes('w-full max-w-none items-center gap-3 px-4 py-2 flex-wrap lg:flex-nowrap'):
         with ui.row().classes('items-center gap-2 flex-nowrap'):
             if on_toggle_left is not None:
-                ui.button(icon='menu', on_click=on_toggle_left).props('dense flat round').classes('pv-topbar-btn')
+                ui.button(icon='menu', on_click=on_toggle_left).props('dense flat round aria-label="Toggle Navigation"').classes('pv-topbar-btn').tooltip('Toggle Navigation')
 
             if on_toggle_filters is not None:
-                ui.button(icon='tune', on_click=on_toggle_filters).props('dense flat round').classes('pv-topbar-btn').tooltip('Filters')
+                ui.button(icon='tune', on_click=on_toggle_filters).props('dense flat round aria-label="Toggle Filters"').classes('pv-topbar-btn').tooltip('Toggle Filters')
 
             with ui.button(on_click=lambda: ui.navigate.to('/')).props('flat dense no-caps').classes('px-3 py-1 pv-brand-btn'):
                 ui.label('PaperVisor').classes('text-lg font-semibold')
@@ -163,18 +163,18 @@ def top_bar(
         with ui.row().classes('items-center gap-2 flex-nowrap'):
             if on_open_inbox is not None:
                 count = int(inbox_count or 0)
-                with ui.button(icon='notifications', on_click=on_open_inbox).props('dense flat round').classes('pv-topbar-btn'):
+                with ui.button(icon='notifications', on_click=on_open_inbox).props('dense flat round aria-label="Inbox"').classes('pv-topbar-btn').tooltip('Inbox'):
                     if count > 0:
                         ui.badge(str(count)).props('color="primary"').classes('pv-chip')
 
             import_handler = on_import or (lambda: None)
-            ui.button(icon='cloud_upload', on_click=import_handler).props('dense flat round').classes('pv-topbar-btn')
+            ui.button(icon='cloud_upload', on_click=import_handler).props('dense flat round aria-label="Import"').classes('pv-topbar-btn').tooltip('Import')
 
             if is_admin:
-                ui.button(icon='settings', on_click=lambda: ui.navigate.to('/admin')).props('dense flat round').classes('pv-topbar-btn')
+                ui.button(icon='settings', on_click=lambda: ui.navigate.to('/admin')).props('dense flat round aria-label="Settings"').classes('pv-topbar-btn').tooltip('Settings')
 
             if on_open_profile is not None:
-                ui.button(icon='person', on_click=on_open_profile).props('dense flat round').classes('pv-topbar-btn')
+                ui.button(icon='person', on_click=on_open_profile).props('dense flat round aria-label="Profile"').classes('pv-topbar-btn').tooltip('Profile')
 
             if on_logout is not None:
-                ui.button(icon='logout', on_click=on_logout).props('dense flat round').classes('pv-topbar-btn')
+                ui.button(icon='logout', on_click=on_logout).props('dense flat round aria-label="Logout"').classes('pv-topbar-btn').tooltip('Logout')

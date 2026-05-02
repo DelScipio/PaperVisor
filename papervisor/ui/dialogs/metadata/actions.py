@@ -2,14 +2,11 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-import uuid
-from typing import Callable
 from nicegui import ui
 from contextlib import asynccontextmanager
 
 from papervisor.services.papers import (
     update_paper_metadata,
-    delete_paper,
 )
 from papervisor.services.media import (
     cover_path_for_ext,
@@ -175,7 +172,9 @@ class MetadataActions:
                     self._notify('File is outside library directory', color='warning')
                     return
             except Exception:
-                pass
+                # 🛡️ Sentinel: Fail securely on path resolution exceptions to prevent traversal bypass
+                self._notify('File access denied', color='warning')
+                return
             ui.download(p, filename=p.name)
         except Exception as ex:
             self._notify(str(ex), color='negative')

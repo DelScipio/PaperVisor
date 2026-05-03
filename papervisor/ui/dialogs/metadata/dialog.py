@@ -368,7 +368,7 @@ class MetadataDialog:
         with self.replace_dlg, dialog_card(max_width_class='max-w-xl', extra_classes='pv-meta-dialog-card'):
             ui.label('Replace file').classes('text-base font-semibold')
             ui.label('Uploads a new file for this item. Metadata stays as-is.').classes('text-xs pv-text-dimmer')
-            ui.upload(on_upload=self.actions.process_replace_upload, auto_upload=True).props('outlined').classes('w-full pv-meta-field')
+            ui.upload(on_upload=self.actions.process_replace_upload, auto_upload=True, max_file_size=524288000).props('outlined').classes('w-full pv-meta-field')
             ui.button('Close', on_click=lambda _e=None: self.replace_dlg.close()).props('flat').classes('w-full pv-meta-action-btn')
 
         def _open_replace_dialog(_e=None) -> None:

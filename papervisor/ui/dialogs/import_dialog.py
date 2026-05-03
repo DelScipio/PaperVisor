@@ -256,6 +256,7 @@ class UploadDialog:
                                     label='Select files or drop them here',
                                     auto_upload=True,
                                     on_upload=lambda e: _handle_upload(e),
+                                    max_file_size=524288000,
                                 )
                                 .props('accept=.pdf,.epub,.cbz multiple outlined')
                                 .classes('w-full pv-upload-uploader pv-upload-dropzone')

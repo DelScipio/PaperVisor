@@ -71,12 +71,12 @@ def top_bar(
         with ui.row().classes("items-center gap-2 flex-nowrap"):
             if on_toggle_left is not None:
                 ui.button(icon="menu", on_click=on_toggle_left).props(
-                    'dense flat round aria-label="Menu"'
-                ).classes("pv-topbar-btn").tooltip("Menu")
+                    'dense flat round aria-label="Toggle navigation menu"'
+                ).classes("pv-topbar-btn").tooltip("Toggle menu")
 
             if on_toggle_filters is not None:
                 ui.button(icon="tune", on_click=on_toggle_filters).props(
-                    'dense flat round aria-label="Filters"'
+                    'dense flat round aria-label="Toggle filters"'
                 ).classes("pv-topbar-btn").tooltip("Filters")
 
             with (
@@ -187,9 +187,9 @@ def top_bar(
                 count = int(inbox_count or 0)
                 with (
                     ui.button(icon="notifications", on_click=on_open_inbox)
-                    .props('dense flat round aria-label="Notifications"')
+                    .props('dense flat round aria-label="Open inbox"')
                     .classes("pv-topbar-btn")
-                    .tooltip("Notifications")
+                    .tooltip("Inbox")
                 ):
                     if count > 0:
                         ui.badge(str(count)).props('color="primary"').classes("pv-chip")
@@ -202,16 +202,16 @@ def top_bar(
             if is_admin:
                 ui.button(
                     icon="settings", on_click=lambda: ui.navigate.to("/admin")
-                ).props('dense flat round aria-label="Settings"').classes(
+                ).props('dense flat round aria-label="Administration settings"').classes(
                     "pv-topbar-btn"
-                ).tooltip("Settings")
+                ).tooltip("Administration settings")
 
             if on_open_profile is not None:
                 ui.button(icon="person", on_click=on_open_profile).props(
-                    'dense flat round aria-label="Profile"'
+                    'dense flat round aria-label="User profile"'
                 ).classes("pv-topbar-btn").tooltip("Profile")
 
             if on_logout is not None:
                 ui.button(icon="logout", on_click=on_logout).props(
-                    'dense flat round aria-label="Logout"'
-                ).classes("pv-topbar-btn").tooltip("Logout")
+                    'dense flat round aria-label="Log out"'
+                ).classes("pv-topbar-btn").tooltip("Log out")

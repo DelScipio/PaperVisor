@@ -214,5 +214,5 @@ def top_bar(
 
             if on_logout is not None:
                 ui.button(icon="logout", on_click=on_logout).props(
-                    'dense flat round aria-label="Log out"'
+                    'dense flat round aria-label="Log Out"'
                 ).classes("pv-topbar-btn").tooltip("Log Out")

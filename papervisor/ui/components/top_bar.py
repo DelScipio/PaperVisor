@@ -163,9 +163,10 @@ def top_bar(
         with ui.row().classes('items-center gap-2 flex-nowrap'):
             if on_open_inbox is not None:
                 count = int(inbox_count or 0)
-                with ui.button(icon='notifications', on_click=on_open_inbox).props('dense flat round aria-label="Open inbox"').classes('pv-topbar-btn').tooltip('Inbox'):
+                with ui.button(icon='notifications', on_click=on_open_inbox).props('dense flat round aria-label="Open inbox"').classes('pv-topbar-btn') as inbox_button:
                     if count > 0:
                         ui.badge(str(count)).props('color="primary"').classes('pv-chip')
+                inbox_button.tooltip('Inbox')
 
             import_handler = on_import or (lambda: None)
             ui.button(icon='cloud_upload', on_click=import_handler).props('dense flat round aria-label="Import document"').classes('pv-topbar-btn').tooltip('Import')

@@ -30,22 +30,6 @@ from papervisor.domain import PaperItem
 # Soft-delete filter: reusable clause to exclude trashed papers.
 _NOT_DELETED = Paper.deleted_at.is_(None)
 
-# Columns needed to populate a PaperItem – shared across all list/search queries
-# so that load_only() stays in sync when PaperItem fields change.
-_PAPER_LIST_COLUMNS = (
-    Paper.id,
-    Paper.title,
-    Paper.subtitle,
-    Paper.reading_progress,
-    Paper.is_completed,
-    Paper.open_count_total,
-    Paper.open_count_since_reset,
-    Paper.file_path,
-    Paper.file_type,
-    Paper.created_at,
-    Paper.library_id,
-)
-
 
 @dataclass(frozen=True)
 class PaperFilters:
@@ -587,21 +571,63 @@ def list_papers(
                 select(Paper)
                 .where(_NOT_DELETED)
                 .order_by(Paper.title.asc(), Paper.created_at.desc())
-                .options(load_only(*_PAPER_LIST_COLUMNS))
+                .options(
+                    load_only(
+                        Paper.id,
+                        Paper.title,
+                        Paper.subtitle,
+                        Paper.reading_progress,
+                        Paper.is_completed,
+                        Paper.open_count_total,
+                        Paper.open_count_since_reset,
+                        Paper.file_path,
+                        Paper.file_type,
+                        Paper.created_at,
+                        Paper.library_id,
+                    )
+                )
             )
         elif sort_key == "title_desc":
             stmt = (
                 select(Paper)
                 .where(_NOT_DELETED)
                 .order_by(Paper.title.desc(), Paper.created_at.desc())
-                .options(load_only(*_PAPER_LIST_COLUMNS))
+                .options(
+                    load_only(
+                        Paper.id,
+                        Paper.title,
+                        Paper.subtitle,
+                        Paper.reading_progress,
+                        Paper.is_completed,
+                        Paper.open_count_total,
+                        Paper.open_count_since_reset,
+                        Paper.file_path,
+                        Paper.file_type,
+                        Paper.created_at,
+                        Paper.library_id,
+                    )
+                )
             )
         else:
             stmt = (
                 select(Paper)
                 .where(_NOT_DELETED)
                 .order_by(Paper.created_at.desc())
-                .options(load_only(*_PAPER_LIST_COLUMNS))
+                .options(
+                    load_only(
+                        Paper.id,
+                        Paper.title,
+                        Paper.subtitle,
+                        Paper.reading_progress,
+                        Paper.is_completed,
+                        Paper.open_count_total,
+                        Paper.open_count_since_reset,
+                        Paper.file_path,
+                        Paper.file_type,
+                        Paper.created_at,
+                        Paper.library_id,
+                    )
+                )
             )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -659,7 +685,21 @@ def list_recent_papers(
             select(Paper)
             .where(_NOT_DELETED)
             .order_by(Paper.created_at.desc())
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            .options(
+                load_only(
+                    Paper.id,
+                    Paper.title,
+                    Paper.subtitle,
+                    Paper.reading_progress,
+                    Paper.is_completed,
+                    Paper.open_count_total,
+                    Paper.open_count_since_reset,
+                    Paper.file_path,
+                    Paper.file_type,
+                    Paper.created_at,
+                    Paper.library_id,
+                )
+            )
         )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -719,7 +759,21 @@ def search_papers(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            .options(
+                load_only(
+                    Paper.id,
+                    Paper.title,
+                    Paper.subtitle,
+                    Paper.reading_progress,
+                    Paper.is_completed,
+                    Paper.open_count_total,
+                    Paper.open_count_since_reset,
+                    Paper.file_path,
+                    Paper.file_type,
+                    Paper.created_at,
+                    Paper.library_id,
+                )
+            )
         )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -744,22 +798,22 @@ def search_papers(
                 session=session, user_id=int(user_id), paper_ids=ids
             )
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
-                is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
-                file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or "",
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
+            is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+            file_type=str(r.file_type or "paper"),
+        )
+        for r in rows
+    ]
 
 
 def _apply_paper_filters(
@@ -1010,7 +1064,21 @@ def list_papers_filtered(
         stmt = _apply_paper_filters(
             select(Paper)
             .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS)),
+            .options(
+                load_only(
+                    Paper.id,
+                    Paper.title,
+                    Paper.subtitle,
+                    Paper.reading_progress,
+                    Paper.is_completed,
+                    Paper.open_count_total,
+                    Paper.open_count_since_reset,
+                    Paper.file_path,
+                    Paper.file_type,
+                    Paper.created_at,
+                    Paper.library_id,
+                )
+            ),
             user_id=user_id,
             library_id=library_id,
             library_ids=library_ids,
@@ -1111,7 +1179,21 @@ def list_books(*, library_id: str | None = None) -> list[PaperItem]:
             .where(_NOT_DELETED)
             .where(Paper.file_type == "book")
             .order_by(Paper.title.asc(), Paper.created_at.desc())
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            .options(
+                load_only(
+                    Paper.id,
+                    Paper.title,
+                    Paper.subtitle,
+                    Paper.reading_progress,
+                    Paper.is_completed,
+                    Paper.open_count_total,
+                    Paper.open_count_since_reset,
+                    Paper.file_path,
+                    Paper.file_type,
+                    Paper.created_at,
+                    Paper.library_id,
+                )
+            )
         )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -1149,8 +1231,8 @@ def get_dashboard_counts(
         # Replaced 4 separate database queries with a single query using conditional aggregation.
         # This prevents N+1-like performance degradation on the dashboard by reducing DB round trips from 4 to 1.
         cols = [
-            func.count(Paper.id).label("total"),
-            func.sum(case((Paper.is_completed.is_(True), 1), else_=0)).label("completed"),
+            func.count(Paper.id).label('total'),
+            func.sum(case((Paper.is_completed.is_(True), 1), else_=0)).label('completed'),
         ]
 
         if user_id is not None:
@@ -1168,8 +1250,8 @@ def get_dashboard_counts(
                 .where(PaperToRead.paper_id == Paper.id)
             )
             cols.extend([
-                func.sum(case((fav_match, 1), else_=0)).label("favorites"),
-                func.sum(case((to_read_match, 1), else_=0)).label("to_read"),
+                func.sum(case((fav_match, 1), else_=0)).label('favorites'),
+                func.sum(case((to_read_match, 1), else_=0)).label('to_read'),
             ])
 
         stmt = base.with_only_columns(*cols)
@@ -1202,7 +1284,21 @@ def list_favorite_papers(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            .options(
+                load_only(
+                    Paper.id,
+                    Paper.title,
+                    Paper.subtitle,
+                    Paper.reading_progress,
+                    Paper.is_completed,
+                    Paper.open_count_total,
+                    Paper.open_count_since_reset,
+                    Paper.file_path,
+                    Paper.file_type,
+                    Paper.created_at,
+                    Paper.library_id,
+                )
+            )
             .join(PaperFavorite, PaperFavorite.paper_id == Paper.id)
             .where(PaperFavorite.user_id == int(user_id))
             .order_by(PaperFavorite.created_at.desc(), Paper.created_at.desc())
@@ -1221,22 +1317,22 @@ def list_favorite_papers(
                 paper_ids=[str(r.id) for r in rows],
             )
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=str(r.id) in fav_ids,
-                is_to_read=str(r.id) in to_read_ids,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
-                file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or "",
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=str(r.id) in fav_ids,
+            is_to_read=str(r.id) in to_read_ids,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+            file_type=str(r.file_type or "paper"),
+        )
+        for r in rows
+    ]
 
 
 def list_to_read_papers(
@@ -1249,7 +1345,21 @@ def list_to_read_papers(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            .options(
+                load_only(
+                    Paper.id,
+                    Paper.title,
+                    Paper.subtitle,
+                    Paper.reading_progress,
+                    Paper.is_completed,
+                    Paper.open_count_total,
+                    Paper.open_count_since_reset,
+                    Paper.file_path,
+                    Paper.file_type,
+                    Paper.created_at,
+                    Paper.library_id,
+                )
+            )
             .join(PaperToRead, PaperToRead.paper_id == Paper.id)
             .where(PaperToRead.user_id == int(user_id))
             .order_by(PaperToRead.created_at.desc(), Paper.created_at.desc())
@@ -1268,22 +1378,22 @@ def list_to_read_papers(
                 paper_ids=[str(r.id) for r in rows],
             )
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=str(r.id) in fav_ids,
-                is_to_read=True,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
-                file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or "",
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=str(r.id) in fav_ids,
+            is_to_read=True,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+            file_type=str(r.file_type or "paper"),
+        )
+        for r in rows
+    ]
 
 
 def list_continue_reading(
@@ -1293,7 +1403,21 @@ def list_continue_reading(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            .options(
+                load_only(
+                    Paper.id,
+                    Paper.title,
+                    Paper.subtitle,
+                    Paper.reading_progress,
+                    Paper.is_completed,
+                    Paper.open_count_total,
+                    Paper.open_count_since_reset,
+                    Paper.file_path,
+                    Paper.file_type,
+                    Paper.created_at,
+                    Paper.library_id,
+                )
+            )
             .where(Paper.is_completed.is_(False))
             .where(Paper.reading_progress > 0)
             .order_by(
@@ -1321,22 +1445,22 @@ def list_continue_reading(
                 session=session, user_id=int(user_id), paper_ids=ids
             )
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
-                is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
-                file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or "",
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
+            is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+            file_type=str(r.file_type or "paper"),
+        )
+        for r in rows
+    ]
 
 
 def list_most_opened(
@@ -1346,7 +1470,21 @@ def list_most_opened(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            .options(
+                load_only(
+                    Paper.id,
+                    Paper.title,
+                    Paper.subtitle,
+                    Paper.reading_progress,
+                    Paper.is_completed,
+                    Paper.open_count_total,
+                    Paper.open_count_since_reset,
+                    Paper.file_path,
+                    Paper.file_type,
+                    Paper.created_at,
+                    Paper.library_id,
+                )
+            )
             .order_by(
                 Paper.open_count_since_reset.desc(),
                 Paper.open_count_total.desc(),
@@ -1372,19 +1510,19 @@ def list_most_opened(
                 session=session, user_id=int(user_id), paper_ids=ids
             )
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
-                is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
-                file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or "",
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
+            is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+            file_type=str(r.file_type or "paper"),
+        )
+        for r in rows
+    ]

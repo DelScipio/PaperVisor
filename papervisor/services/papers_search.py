@@ -1011,7 +1011,7 @@ def list_books(*, library_id: str | None = None) -> list[PaperItem]:
 
 def get_dashboard_counts(*, user_id: int | None = None, library_id: str | None = None) -> dict[str, int]:
     with get_session() as session:
-        base = select(Paper.id).select_from(Paper)
+        base = select(Paper).where(_NOT_DELETED)
         if library_id:
             base = base.where(Paper.library_id == library_id)
 
@@ -1019,18 +1019,15 @@ def get_dashboard_counts(*, user_id: int | None = None, library_id: str | None =
             allowed = _accessible_library_ids_subquery(user_id=int(user_id))
             base = base.where(Paper.library_id.in_(allowed))
 
-        total = session.execute(select(func.count()).select_from(base.subquery())).scalar_one()
+        # ⚡ Bolt Optimization:
+        # Replaced 4 separate database queries with a single query using conditional aggregation.
+        # This prevents N+1-like performance degradation on the dashboard by reducing DB round trips from 4 to 1.
+        cols = [
+            func.count(Paper.id).label('total'),
+            func.sum(case((Paper.is_completed.is_(True), 1), else_=0)).label('completed'),
+        ]
 
-        completed = session.execute(
-            select(func.count()).select_from(
-                base.where(Paper.is_completed.is_(True)).subquery()
-            )
-        ).scalar_one()
-
-        if user_id is None:
-            favorites = 0
-            to_read = 0
-        else:
+        if user_id is not None:
             uid = int(user_id)
             fav_match = exists(
                 select(1)
@@ -1044,13 +1041,22 @@ def get_dashboard_counts(*, user_id: int | None = None, library_id: str | None =
                 .where(PaperToRead.user_id == uid)
                 .where(PaperToRead.paper_id == Paper.id)
             )
+            cols.extend([
+                func.sum(case((fav_match, 1), else_=0)).label('favorites'),
+                func.sum(case((to_read_match, 1), else_=0)).label('to_read'),
+            ])
 
-            favorites = session.execute(
-                select(func.count()).select_from(base.where(fav_match).subquery())
-            ).scalar_one()
-            to_read = session.execute(
-                select(func.count()).select_from(base.where(to_read_match).subquery())
-            ).scalar_one()
+        stmt = base.with_only_columns(*cols)
+        row = session.execute(stmt).one()
+
+        total = row.total or 0
+        completed = row.completed or 0
+        if user_id is not None:
+            favorites = row.favorites or 0
+            to_read = row.to_read or 0
+        else:
+            favorites = 0
+            to_read = 0
 
     return {'total': int(total), 'favorites': int(favorites), 'to_read': int(to_read), 'completed': int(completed)}
 

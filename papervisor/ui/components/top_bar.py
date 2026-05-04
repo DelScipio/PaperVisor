@@ -204,7 +204,7 @@ def top_bar(
                     icon="settings", on_click=lambda: ui.navigate.to("/admin")
                 ).props('dense flat round aria-label="Administration settings"').classes(
                     "pv-topbar-btn"
-                ).tooltip("Settings")
+                ).tooltip("Administration settings")
 
             if on_open_profile is not None:
                 ui.button(icon="person", on_click=on_open_profile).props(

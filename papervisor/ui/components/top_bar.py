@@ -186,9 +186,11 @@ def top_bar(
         with ui.row().classes("items-center gap-2 flex-nowrap"):
             if on_open_inbox is not None:
                 count = int(inbox_count or 0)
-                with ui.button(icon="notifications", on_click=on_open_inbox).props(
-                    'dense flat round aria-label="Open notifications inbox"'
-                ).classes("pv-topbar-btn") as inbox_button:
+                with (
+                    ui.button(icon="notifications", on_click=on_open_inbox)
+                    .props('dense flat round aria-label="Open notifications inbox"')
+                    .classes("pv-topbar-btn") as inbox_button
+                ):
                     if count > 0:
                         ui.badge(str(count)).props('color="primary"').classes("pv-chip")
                 inbox_button.tooltip("Notifications")

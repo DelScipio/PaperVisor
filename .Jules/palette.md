@@ -1,3 +1,7 @@
+## 2026-04-29 - Accessibility of Icon-Only Navigation Buttons
+**Learning:** Standard NiceGUI `ui.button(icon=...)` components used in global navigation structures (like the top bar) lack both visual hover context and screen-reader semantics by default, making them inaccessible to keyboard/assistive users and ambiguous to mouse users.
+**Action:** Always append explicit `.props('aria-label="<Action Name>"')` for Quasar ARIA compliance and chain `.tooltip('<Action Name>')` for visual context whenever creating icon-only buttons in NiceGUI, particularly in navigation or toolbar areas.
+
 ## 2024-05-18 - Component Abstraction Props Iteration
 **Learning:** When passing `aria-label` or `tooltip` strings as props into NiceGUI abstracted sub-components (like `_render_corner_toggle_button`), you must remember to explicitly apply those values to the wrapped standard elements. Because Python's `ui.element().props()` accepts a single string argument, format strings or string concatenation is required (e.g., `f'aria-label="{tooltip}"'`). Missing this pattern results in the aria-label missing from the rendered DOM despite being declared in the component constructor.
 **Action:** When creating reusable UI sub-components in NiceGUI, add explicit parameter arguments for accessibility props (like `tooltip` and `aria-label`) and ensure they are bound to the inner `ui.element` utilizing `f-strings` or format syntax if they are dynamic.

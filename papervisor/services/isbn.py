@@ -170,6 +170,8 @@ def fetch_openlibrary_metadata(isbn: str, *, timeout_s: float = 6.0) -> IsbnMeta
         label='OpenLibrary',
     )
     data = payload.get(f'ISBN:{cleaned}') or {}
+    if not isinstance(data, dict) or not data:
+        raise ValueError('OpenLibrary: no results')
 
     title = str(data.get('title') or '')
 

@@ -44,7 +44,13 @@ def _normalize_doi(raw: str) -> str:
     # Common user inputs: "doi:10..." or full resolver URLs.
     s = re.sub(r'^doi\s*:\s*', '', s, flags=re.IGNORECASE)
     s = re.sub(r'^https?://(dx\.)?doi\.org/', '', s, flags=re.IGNORECASE)
-    return s.strip()
+
+    # If DOI is embedded in free text, extract canonical token.
+    m = _DOI_RE.search(s)
+    if m:
+        s = m.group(0)
+
+    return s.strip().rstrip('.,);]')
 
 
 def extract_doi_from_pdf(file_path: str, *, max_pages: int = 2) -> str | None:

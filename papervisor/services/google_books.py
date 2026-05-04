@@ -75,6 +75,45 @@ def _request_volumes_json_or_raise(*, params: dict[str, str], timeout_s: float) 
         raise ValueError(f'Google Books lookup failed (invalid JSON: {e})')
 
 
+def _volume_identifiers(volume: dict[str, Any]) -> list[str]:
+    vi = volume.get('volumeInfo')
+    if not isinstance(vi, dict):
+        return []
+    ids = vi.get('industryIdentifiers')
+    if not isinstance(ids, list):
+        return []
+
+    out: list[str] = []
+    for ident in ids:
+        if not isinstance(ident, dict):
+            continue
+        cleaned = _clean_isbn(str(ident.get('identifier') or ''))
+        if cleaned:
+            out.append(cleaned)
+    return out
+
+
+def _select_best_volume(items: list[Any], requested_isbn: str) -> dict[str, Any] | None:
+    """Pick the most relevant volume for an ISBN query.
+
+    Prefer entries whose industry identifiers include the requested ISBN;
+    otherwise fall back to the first dict item to keep prior behavior.
+    """
+
+    first_dict = next((x for x in items if isinstance(x, dict)), None)
+    if not isinstance(first_dict, dict):
+        return None
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        ids = _volume_identifiers(item)
+        if requested_isbn in ids:
+            return item
+
+    return first_dict
+
+
 def search_googlebooks_isbn(*, title: str, author: str | None = None, timeout_s: float = 6.0) -> str | None:
     """Best-effort ISBN discovery using Google Books.
 
@@ -175,8 +214,7 @@ def fetch_googlebooks_metadata(isbn: str, *, timeout_s: float = 6.0) -> IsbnMeta
     if not isinstance(items, list) or not items:
         raise ValueError('Google Books: no results')
 
-    # Choose the first plausible volume.
-    best = next((x for x in items if isinstance(x, dict)), None)
+    best = _select_best_volume(items, cleaned)
     if not isinstance(best, dict):
         raise ValueError('Google Books: invalid response')
 
@@ -224,15 +262,8 @@ def fetch_googlebooks_metadata(isbn: str, *, timeout_s: float = 6.0) -> IsbnMeta
 
     # Prefer returning an ISBN_13 if present.
     best_isbn = cleaned
-    ids = vi.get('industryIdentifiers')
-    if isinstance(ids, list):
-        candidates: list[str] = []
-        for ident in ids:
-            if not isinstance(ident, dict):
-                continue
-            c = _clean_isbn(str(ident.get('identifier') or ''))
-            if c:
-                candidates.append(c)
+    candidates = _volume_identifiers(best)
+    if candidates:
         isbn13 = next((c for c in candidates if len(c) == 13), None)
         best_isbn = isbn13 or (candidates[0] if candidates else cleaned)
 
@@ -275,7 +306,7 @@ def fetch_googlebooks_cover(*, isbn: str, timeout_s: float = 8.0) -> tuple[bytes
     if not isinstance(items, list) or not items:
         raise ValueError('Google Books: no results')
 
-    best = next((x for x in items if isinstance(x, dict)), None)
+    best = _select_best_volume(items, cleaned)
     if not isinstance(best, dict):
         raise ValueError('Google Books: invalid response')
     vi = best.get('volumeInfo')

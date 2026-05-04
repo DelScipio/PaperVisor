@@ -125,10 +125,15 @@ class MetadataTaskQueue:
 
 
 _queue_singleton: MetadataTaskQueue | None = None
+_queue_singleton_lock = threading.Lock()
 
 
 def get_metadata_task_queue() -> MetadataTaskQueue:
     global _queue_singleton
-    if _queue_singleton is None:
-        _queue_singleton = MetadataTaskQueue()
+    if _queue_singleton is not None:
+        return _queue_singleton
+
+    with _queue_singleton_lock:
+        if _queue_singleton is None:
+            _queue_singleton = MetadataTaskQueue()
     return _queue_singleton

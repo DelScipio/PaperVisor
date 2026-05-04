@@ -12,15 +12,50 @@ from papervisor.services.doi import extract_doi_from_text
 from papervisor.services.isbn import extract_isbn_from_text
 
 
-_WS_RE = re.compile(r"\s+")
-
-
 def _resolve_zip_path(opf_path: str | None, href: str) -> str:
     href = (href or '').replace('\\', '/').lstrip('/')
     opf_dir = opf_path.rsplit('/', 1)[0] if opf_path and '/' in opf_path else ''
     if not opf_dir:
         return posixpath.normpath(href).lstrip('/')
     return posixpath.normpath(posixpath.join(opf_dir, href)).lstrip('/')
+
+
+def _sanitize_href(href: str) -> str:
+    """Normalize OPF hrefs for zip lookups.
+
+    Some EPUBs include HTML entities, URL query params, or fragments in href-like
+    fields; zip member names never include those suffixes.
+    """
+
+    h = unescape((href or '').strip())
+    h = h.split('#', 1)[0]
+    h = h.split('?', 1)[0]
+    return h.strip()
+
+
+def _cover_zip_candidates(opf_path: str | None, href: str) -> list[str]:
+    """Build candidate zip paths for a cover href.
+
+    We try OPF-relative resolution first, then direct archive path. This handles
+    both manifest-relative hrefs and fallback entries from zf.namelist().
+    """
+
+    cleaned = _sanitize_href(href)
+    if not cleaned:
+        return []
+
+    rel = _resolve_zip_path(opf_path, cleaned)
+    direct = posixpath.normpath(cleaned.replace('\\', '/').lstrip('/')).lstrip('/')
+
+    out: list[str] = []
+    for p in [rel, direct]:
+        if not p:
+            continue
+        if p.startswith('../'):
+            continue
+        if p not in out:
+            out.append(p)
+    return out
 
 
 @dataclass(frozen=True)
@@ -108,17 +143,22 @@ def extract_epub_cover(file_path: str) -> tuple[bytes, str] | None:
             if not cover_href:
                 return None
 
-            # Resolve path relative to OPF location.
-            cover_path = _resolve_zip_path(opf_path, cover_href)
+            data: bytes | None = None
+            resolved_path = ''
+            for cover_path in _cover_zip_candidates(opf_path, cover_href):
+                try:
+                    data = zf.read(cover_path)
+                    resolved_path = cover_path
+                    break
+                except Exception:
+                    continue
 
-            try:
-                data = zf.read(cover_path)
-            except Exception:
+            if data is None:
                 return None
             if not data:
                 return None
 
-            lower = cover_href.lower()
+            lower = resolved_path.lower()
             if lower.endswith('.png'):
                 return (data, '.png')
             if lower.endswith('.webp'):

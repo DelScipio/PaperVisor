@@ -30,6 +30,20 @@ from papervisor.domain import PaperItem
 # Soft-delete filter: reusable clause to exclude trashed papers.
 _NOT_DELETED = Paper.deleted_at.is_(None)
 
+_PAPER_LOAD_OPTIONS = load_only(
+    Paper.id,
+    Paper.title,
+    Paper.subtitle,
+    Paper.reading_progress,
+    Paper.is_completed,
+    Paper.open_count_total,
+    Paper.open_count_since_reset,
+    Paper.file_path,
+    Paper.file_type,
+    Paper.created_at,
+    Paper.library_id,
+)
+
 
 @dataclass(frozen=True)
 class PaperFilters:
@@ -571,63 +585,21 @@ def list_papers(
                 select(Paper)
                 .where(_NOT_DELETED)
                 .order_by(Paper.title.asc(), Paper.created_at.desc())
-                .options(
-                    load_only(
-                        Paper.id,
-                        Paper.title,
-                        Paper.subtitle,
-                        Paper.reading_progress,
-                        Paper.is_completed,
-                        Paper.open_count_total,
-                        Paper.open_count_since_reset,
-                        Paper.file_path,
-                        Paper.file_type,
-                        Paper.created_at,
-                        Paper.library_id,
-                    )
-                )
+                .options(_PAPER_LOAD_OPTIONS)
             )
         elif sort_key == "title_desc":
             stmt = (
                 select(Paper)
                 .where(_NOT_DELETED)
                 .order_by(Paper.title.desc(), Paper.created_at.desc())
-                .options(
-                    load_only(
-                        Paper.id,
-                        Paper.title,
-                        Paper.subtitle,
-                        Paper.reading_progress,
-                        Paper.is_completed,
-                        Paper.open_count_total,
-                        Paper.open_count_since_reset,
-                        Paper.file_path,
-                        Paper.file_type,
-                        Paper.created_at,
-                        Paper.library_id,
-                    )
-                )
+                .options(_PAPER_LOAD_OPTIONS)
             )
         else:
             stmt = (
                 select(Paper)
                 .where(_NOT_DELETED)
                 .order_by(Paper.created_at.desc())
-                .options(
-                    load_only(
-                        Paper.id,
-                        Paper.title,
-                        Paper.subtitle,
-                        Paper.reading_progress,
-                        Paper.is_completed,
-                        Paper.open_count_total,
-                        Paper.open_count_since_reset,
-                        Paper.file_path,
-                        Paper.file_type,
-                        Paper.created_at,
-                        Paper.library_id,
-                    )
-                )
+                .options(_PAPER_LOAD_OPTIONS)
             )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -685,21 +657,7 @@ def list_recent_papers(
             select(Paper)
             .where(_NOT_DELETED)
             .order_by(Paper.created_at.desc())
-            .options(
-                load_only(
-                    Paper.id,
-                    Paper.title,
-                    Paper.subtitle,
-                    Paper.reading_progress,
-                    Paper.is_completed,
-                    Paper.open_count_total,
-                    Paper.open_count_since_reset,
-                    Paper.file_path,
-                    Paper.file_type,
-                    Paper.created_at,
-                    Paper.library_id,
-                )
-            )
+            .options(_PAPER_LOAD_OPTIONS)
         )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -759,21 +717,7 @@ def search_papers(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(
-                load_only(
-                    Paper.id,
-                    Paper.title,
-                    Paper.subtitle,
-                    Paper.reading_progress,
-                    Paper.is_completed,
-                    Paper.open_count_total,
-                    Paper.open_count_since_reset,
-                    Paper.file_path,
-                    Paper.file_type,
-                    Paper.created_at,
-                    Paper.library_id,
-                )
-            )
+            .options(_PAPER_LOAD_OPTIONS)
         )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -1064,21 +1008,7 @@ def list_papers_filtered(
         stmt = _apply_paper_filters(
             select(Paper)
             .where(_NOT_DELETED)
-            .options(
-                load_only(
-                    Paper.id,
-                    Paper.title,
-                    Paper.subtitle,
-                    Paper.reading_progress,
-                    Paper.is_completed,
-                    Paper.open_count_total,
-                    Paper.open_count_since_reset,
-                    Paper.file_path,
-                    Paper.file_type,
-                    Paper.created_at,
-                    Paper.library_id,
-                )
-            ),
+            .options(_PAPER_LOAD_OPTIONS),
             user_id=user_id,
             library_id=library_id,
             library_ids=library_ids,
@@ -1179,21 +1109,7 @@ def list_books(*, library_id: str | None = None) -> list[PaperItem]:
             .where(_NOT_DELETED)
             .where(Paper.file_type == "book")
             .order_by(Paper.title.asc(), Paper.created_at.desc())
-            .options(
-                load_only(
-                    Paper.id,
-                    Paper.title,
-                    Paper.subtitle,
-                    Paper.reading_progress,
-                    Paper.is_completed,
-                    Paper.open_count_total,
-                    Paper.open_count_since_reset,
-                    Paper.file_path,
-                    Paper.file_type,
-                    Paper.created_at,
-                    Paper.library_id,
-                )
-            )
+            .options(_PAPER_LOAD_OPTIONS)
         )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -1284,21 +1200,7 @@ def list_favorite_papers(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(
-                load_only(
-                    Paper.id,
-                    Paper.title,
-                    Paper.subtitle,
-                    Paper.reading_progress,
-                    Paper.is_completed,
-                    Paper.open_count_total,
-                    Paper.open_count_since_reset,
-                    Paper.file_path,
-                    Paper.file_type,
-                    Paper.created_at,
-                    Paper.library_id,
-                )
-            )
+            .options(_PAPER_LOAD_OPTIONS)
             .join(PaperFavorite, PaperFavorite.paper_id == Paper.id)
             .where(PaperFavorite.user_id == int(user_id))
             .order_by(PaperFavorite.created_at.desc(), Paper.created_at.desc())
@@ -1345,21 +1247,7 @@ def list_to_read_papers(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(
-                load_only(
-                    Paper.id,
-                    Paper.title,
-                    Paper.subtitle,
-                    Paper.reading_progress,
-                    Paper.is_completed,
-                    Paper.open_count_total,
-                    Paper.open_count_since_reset,
-                    Paper.file_path,
-                    Paper.file_type,
-                    Paper.created_at,
-                    Paper.library_id,
-                )
-            )
+            .options(_PAPER_LOAD_OPTIONS)
             .join(PaperToRead, PaperToRead.paper_id == Paper.id)
             .where(PaperToRead.user_id == int(user_id))
             .order_by(PaperToRead.created_at.desc(), Paper.created_at.desc())
@@ -1403,21 +1291,7 @@ def list_continue_reading(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(
-                load_only(
-                    Paper.id,
-                    Paper.title,
-                    Paper.subtitle,
-                    Paper.reading_progress,
-                    Paper.is_completed,
-                    Paper.open_count_total,
-                    Paper.open_count_since_reset,
-                    Paper.file_path,
-                    Paper.file_type,
-                    Paper.created_at,
-                    Paper.library_id,
-                )
-            )
+            .options(_PAPER_LOAD_OPTIONS)
             .where(Paper.is_completed.is_(False))
             .where(Paper.reading_progress > 0)
             .order_by(
@@ -1470,21 +1344,7 @@ def list_most_opened(
         stmt = (
             select(Paper)
             .where(_NOT_DELETED)
-            .options(
-                load_only(
-                    Paper.id,
-                    Paper.title,
-                    Paper.subtitle,
-                    Paper.reading_progress,
-                    Paper.is_completed,
-                    Paper.open_count_total,
-                    Paper.open_count_since_reset,
-                    Paper.file_path,
-                    Paper.file_type,
-                    Paper.created_at,
-                    Paper.library_id,
-                )
-            )
+            .options(_PAPER_LOAD_OPTIONS)
             .order_by(
                 Paper.open_count_since_reset.desc(),
                 Paper.open_count_total.desc(),

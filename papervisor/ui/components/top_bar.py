@@ -71,18 +71,19 @@ def top_bar(
         with ui.row().classes("items-center gap-2 flex-nowrap"):
             if on_toggle_left is not None:
                 ui.button(icon="menu", on_click=on_toggle_left).props(
-                    'dense flat round aria-label="Toggle Navigation"'
-                ).classes("pv-topbar-btn").tooltip("Toggle Navigation")
+                    'dense flat round aria-label="Toggle navigation menu"'
+                ).classes("pv-topbar-btn").tooltip("Navigation Menu")
 
             if on_toggle_filters is not None:
                 ui.button(icon="tune", on_click=on_toggle_filters).props(
-                    'dense flat round aria-label="Filters"'
+                    'dense flat round aria-label="Toggle filters"'
                 ).classes("pv-topbar-btn").tooltip("Filters")
 
             with (
                 ui.button(on_click=lambda: ui.navigate.to("/"))
-                .props("flat dense no-caps")
+                .props('flat dense no-caps aria-label="Go to home"')
                 .classes("px-3 py-1 pv-brand-btn")
+                .tooltip("Home")
             ):
                 ui.label("PaperVisor").classes("text-lg font-semibold")
 
@@ -187,7 +188,7 @@ def top_bar(
                 count = int(inbox_count or 0)
                 with (
                     ui.button(icon="notifications", on_click=on_open_inbox)
-                    .props('dense flat round aria-label="Notifications"')
+                    .props('dense flat round aria-label="Open notifications inbox"')
                     .classes("pv-topbar-btn")
                     .tooltip("Notifications")
                 ):
@@ -196,19 +197,19 @@ def top_bar(
 
             import_handler = on_import or (lambda: None)
             ui.button(icon="cloud_upload", on_click=import_handler).props(
-                'dense flat round aria-label="Upload"'
-            ).classes("pv-topbar-btn").tooltip("Upload")
+                'dense flat round aria-label="Import files"'
+            ).classes("pv-topbar-btn").tooltip("Import Files")
 
             if is_admin:
                 ui.button(
                     icon="settings", on_click=lambda: ui.navigate.to("/admin")
-                ).props('dense flat round aria-label="Settings"').classes(
+                ).props('dense flat round aria-label="Open admin settings"').classes(
                     "pv-topbar-btn"
-                ).tooltip("Settings")
+                ).tooltip("Admin Settings")
 
             if on_open_profile is not None:
                 ui.button(icon="person", on_click=on_open_profile).props(
-                    'dense flat round aria-label="Profile"'
+                    'dense flat round aria-label="Open profile"'
                 ).classes("pv-topbar-btn").tooltip("Profile")
 
             if on_logout is not None:

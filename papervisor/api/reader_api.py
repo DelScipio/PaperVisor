@@ -38,9 +38,10 @@ from papervisor.api.schemas import (
     ReadingStateOut,
     ReadingStateUpdated,
 )
-from papervisor.auth import current_user_id, is_admin, require_api_login
+from papervisor.auth import current_user_id, is_admin, require_api_admin, require_api_login
 from papervisor.core.config import get_paths
 from papervisor.core.exceptions import PermissionDeniedException
+from papervisor.services.db_importer import get_import_report, run_import_queue
 from papervisor.services.media import generate_pdf_first_page_thumbnail
 from papervisor.services.papers import (
     PaperFilters,
@@ -276,6 +277,34 @@ def health_check(request: Request) -> HealthResponse:
         disk_free_mb=disk_free_mb,
         papers_count=papers_count,
     )
+
+
+@router.get(
+    '/admin/imports/report',
+    tags=['admin'],
+    summary='Get startup import report',
+    description='Returns import queue configuration plus last run and recent history.',
+    dependencies=[Depends(require_api_admin)],
+)
+def admin_import_report_endpoint(
+    limit: int = Query(20, ge=1, le=100, description='Number of history entries to return.'),
+) -> dict[str, object]:
+    return get_import_report(limit=limit)
+
+
+@router.post(
+    '/admin/imports/run',
+    tags=['admin'],
+    summary='Run import queue now',
+    description='Triggers import queue processing immediately. Use dry_run=true for preview mode.',
+    dependencies=[Depends(require_api_admin)],
+)
+def admin_import_run_endpoint(
+    dry_run: bool = Query(False, description='When true, performs a preview without DB writes.'),
+    limit: int = Query(20, ge=1, le=100, description='Number of history entries to include in response.'),
+) -> dict[str, object]:
+    run_import_queue(force=True, dry_run=dry_run)
+    return get_import_report(limit=limit)
 
 
 # ============================================================================

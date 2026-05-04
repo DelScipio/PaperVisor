@@ -7,7 +7,7 @@ from typing import Any
 
 from sqlalchemy import Integer, and_, case, exists, select, true
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, load_only
+from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -23,28 +23,12 @@ from papervisor.db.models import (
     Tag,
 )
 
-from papervisor.db.session import get_session
+from papervisor.db.session import get_session, use_session
 from papervisor.domain import PaperItem
 
 
 # Soft-delete filter: reusable clause to exclude trashed papers.
 _NOT_DELETED = Paper.deleted_at.is_(None)
-
-# Columns needed to populate a PaperItem – shared across all list/search queries
-# so that load_only() stays in sync when PaperItem fields change.
-_PAPER_LIST_COLUMNS = (
-    Paper.id,
-    Paper.title,
-    Paper.subtitle,
-    Paper.reading_progress,
-    Paper.is_completed,
-    Paper.open_count_total,
-    Paper.open_count_since_reset,
-    Paper.file_path,
-    Paper.file_type,
-    Paper.created_at,
-    Paper.library_id,
-)
 
 
 @dataclass(frozen=True)
@@ -78,41 +62,41 @@ class PaperFilters:
 
 
 _SEARCH_MODE_ALIASES: dict[str, str] = {
-    "all": "all",
-    "any": "all",
-    "title": "title",
-    "titles": "title",
-    "author": "authors",
-    "authors": "authors",
-    "publisher": "publisher",
-    "publishers": "publisher",
-    "journal": "journal",
-    "journals": "journal",
-    "tag": "tags",
-    "tags": "tags",
-    "doi": "doi",
-    "isbn": "isbn",
+    'all': 'all',
+    'any': 'all',
+    'title': 'title',
+    'titles': 'title',
+    'author': 'authors',
+    'authors': 'authors',
+    'publisher': 'publisher',
+    'publishers': 'publisher',
+    'journal': 'journal',
+    'journals': 'journal',
+    'tag': 'tags',
+    'tags': 'tags',
+    'doi': 'doi',
+    'isbn': 'isbn',
 }
 
 
 def _normalize_search_mode(mode: str | None) -> str:
-    raw = str(mode or "all").strip().lower()
-    return _SEARCH_MODE_ALIASES.get(raw, "all")
+    raw = str(mode or 'all').strip().lower()
+    return _SEARCH_MODE_ALIASES.get(raw, 'all')
 
 
 def _escape_like(value: str) -> str:
-    return str(value).translate(str.maketrans({"%": "\\%", "_": "\\_", "\\": "\\\\"}))
+    return str(value).translate(str.maketrans({'%': '\\%', '_': '\\_', '\\': '\\\\'}))
 
 
 def _search_scope_clause(*, query: str, mode: str) -> ColumnElement[bool]:
-    q = str(query or "").strip().lower()
+    q = str(query or '').strip().lower()
     if not q:
         return true()
 
     q_escaped = _escape_like(q)
 
     def _like(col: Any) -> ColumnElement[bool]:
-        return func.lower(func.coalesce(col, "")).like(f"%{q_escaped}%", escape="\\")
+        return func.lower(func.coalesce(col, '')).like(f'%{q_escaped}%', escape='\\')
 
     mode_key = _normalize_search_mode(mode)
     tag_match = exists(
@@ -120,24 +104,22 @@ def _search_scope_clause(*, query: str, mode: str) -> ColumnElement[bool]:
         .select_from(PaperTag)
         .join(Tag, Tag.id == PaperTag.tag_id)
         .where(PaperTag.paper_id == Paper.id)
-        .where(
-            func.lower(func.coalesce(Tag.name, "")).like(f"%{q_escaped}%", escape="\\")
-        )
+        .where(func.lower(func.coalesce(Tag.name, '')).like(f'%{q_escaped}%', escape='\\'))
     )
 
-    if mode_key == "tags":
+    if mode_key == 'tags':
         return tag_match
-    if mode_key == "title":
+    if mode_key == 'title':
         return or_(_like(Paper.title), _like(Paper.subtitle))
-    if mode_key == "authors":
+    if mode_key == 'authors':
         return _like(Paper.authors)
-    if mode_key == "publisher":
+    if mode_key == 'publisher':
         return _like(Paper.publisher)
-    if mode_key == "journal":
+    if mode_key == 'journal':
         return _like(Paper.journal)
-    if mode_key == "doi":
+    if mode_key == 'doi':
         return _like(Paper.doi)
-    if mode_key == "isbn":
+    if mode_key == 'isbn':
         return _like(Paper.isbn)
 
     return or_(
@@ -169,12 +151,12 @@ def _parse_smart_query_v2(raw: str | None) -> dict[str, Any] | None:
         return None
     if not isinstance(data, dict):
         return None
-    if int(data.get("version") or 0) != 2:
+    if int(data.get('version') or 0) != 2:
         return None
-    root = data.get("root")
+    root = data.get('root')
     if not isinstance(root, dict):
         return None
-    if str(root.get("type") or "").strip().lower() != "group":
+    if str(root.get('type') or '').strip().lower() != 'group':
         return None
     return data
 
@@ -183,41 +165,33 @@ def _smart_query_clause(root: dict[str, Any]) -> ColumnElement[bool] | None:
     """Build a SQL clause from a smart-marker rule tree root node."""
 
     def _is_empty_text(col: Any) -> Any:
-        return func.length(func.trim(func.coalesce(col, ""))) == 0
+        return func.length(func.trim(func.coalesce(col, ''))) == 0
 
     def _ci(col: Any) -> Any:
-        return func.lower(func.coalesce(col, ""))
+        return func.lower(func.coalesce(col, ''))
 
     def _normalize_list(values: list[str] | None) -> list[str]:
         out: list[str] = []
         for v in values or []:
-            s = str(v or "").strip()
+            s = str(v or '').strip()
             if s:
                 out.append(s)
         return out
 
     def _rule_clause(node: dict[str, Any]) -> ColumnElement[bool] | None:
-        field = str(node.get("field") or "").strip().lower()
-        op = str(node.get("operator") or "").strip().lower()
-        value = node.get("value")
+        field = str(node.get('field') or '').strip().lower()
+        op = str(node.get('operator') or '').strip().lower()
+        value = node.get('value')
 
-        if field == "tags":
-            values = _normalize_list(
-                value
-                if isinstance(value, list)
-                else ([value] if isinstance(value, str) else None)
-            )
-            if op in {"empty", "is_empty"}:
-                return ~exists(
-                    select(1).select_from(PaperTag).where(PaperTag.paper_id == Paper.id)
-                )
-            if op in {"not_empty", "is_not_empty"}:
-                return exists(
-                    select(1).select_from(PaperTag).where(PaperTag.paper_id == Paper.id)
-                )
+        if field == 'tags':
+            values = _normalize_list(value if isinstance(value, list) else ([value] if isinstance(value, str) else None))
+            if op in {'empty', 'is_empty'}:
+                return ~exists(select(1).select_from(PaperTag).where(PaperTag.paper_id == Paper.id))
+            if op in {'not_empty', 'is_not_empty'}:
+                return exists(select(1).select_from(PaperTag).where(PaperTag.paper_id == Paper.id))
             if not values:
                 return None
-            if op in {"includes_all", "all"}:
+            if op in {'includes_all', 'all'}:
                 return and_(
                     *[
                         exists(
@@ -238,27 +212,15 @@ def _smart_query_clause(root: dict[str, Any]) -> ColumnElement[bool] | None:
                 .where(Tag.name.in_(values))
             )
 
-        if field == "markers":
-            values = _normalize_list(
-                value
-                if isinstance(value, list)
-                else ([value] if isinstance(value, str) else None)
-            )
-            if op in {"empty", "is_empty"}:
-                return ~exists(
-                    select(1)
-                    .select_from(PaperMarker)
-                    .where(PaperMarker.paper_id == Paper.id)
-                )
-            if op in {"not_empty", "is_not_empty"}:
-                return exists(
-                    select(1)
-                    .select_from(PaperMarker)
-                    .where(PaperMarker.paper_id == Paper.id)
-                )
+        if field == 'markers':
+            values = _normalize_list(value if isinstance(value, list) else ([value] if isinstance(value, str) else None))
+            if op in {'empty', 'is_empty'}:
+                return ~exists(select(1).select_from(PaperMarker).where(PaperMarker.paper_id == Paper.id))
+            if op in {'not_empty', 'is_not_empty'}:
+                return exists(select(1).select_from(PaperMarker).where(PaperMarker.paper_id == Paper.id))
             if not values:
                 return None
-            if op in {"includes_all", "all"}:
+            if op in {'includes_all', 'all'}:
                 return and_(
                     *[
                         exists(
@@ -278,53 +240,53 @@ def _smart_query_clause(root: dict[str, Any]) -> ColumnElement[bool] | None:
             )
 
         text_cols: dict[str, Any] = {
-            "title": Paper.title,
-            "subtitle": Paper.subtitle,
-            "authors": Paper.authors,
-            "publisher": Paper.publisher,
-            "journal": Paper.journal,
-            "doi": Paper.doi,
-            "isbn": Paper.isbn,
-            "language": Paper.language,
-            "genres": Paper.genres,
-            "keywords": Paper.keywords,
-            "year": Paper.published_year,
-            "published_year": Paper.published_year,
-            "file_path": Paper.file_path,
+            'title': Paper.title,
+            'subtitle': Paper.subtitle,
+            'authors': Paper.authors,
+            'publisher': Paper.publisher,
+            'journal': Paper.journal,
+            'doi': Paper.doi,
+            'isbn': Paper.isbn,
+            'language': Paper.language,
+            'genres': Paper.genres,
+            'keywords': Paper.keywords,
+            'year': Paper.published_year,
+            'published_year': Paper.published_year,
+            'file_path': Paper.file_path,
         }
         if field in text_cols:
             col = text_cols[field]
-            if op in {"empty", "is_empty"}:
+            if op in {'empty', 'is_empty'}:
                 return _is_empty_text(col)
-            if op in {"not_empty", "is_not_empty"}:
+            if op in {'not_empty', 'is_not_empty'}:
                 return ~_is_empty_text(col)
 
-            v = str(value or "").strip()
+            v = str(value or '').strip()
             if not v:
                 return None
-            if op == "equals":
+            if op == 'equals':
                 return _ci(col) == v.lower()
-            if op in {"not_equals", "neq"}:
+            if op in {'not_equals', 'neq'}:
                 return _ci(col) != v.lower()
-            if op == "contains":
-                return _ci(col).like(f"%{v.lower()}%")
-            if op in {"not_contains", "does_not_contain"}:
-                return ~_ci(col).like(f"%{v.lower()}%")
+            if op == 'contains':
+                return _ci(col).like(f'%{v.lower()}%')
+            if op in {'not_contains', 'does_not_contain'}:
+                return ~_ci(col).like(f'%{v.lower()}%')
             return None
 
-        if field == "file_type":
-            v = str(value or "").strip().lower()
+        if field == 'file_type':
+            v = str(value or '').strip().lower()
             if not v:
                 return None
-            if op in {"not_equals", "neq"}:
-                return func.lower(func.coalesce(Paper.file_type, "")) != v
-            return func.lower(func.coalesce(Paper.file_type, "")) == v
+            if op in {'not_equals', 'neq'}:
+                return func.lower(func.coalesce(Paper.file_type, '')) != v
+            return func.lower(func.coalesce(Paper.file_type, '')) == v
 
-        if field == "library_id":
-            v = str(value or "").strip()
+        if field == 'library_id':
+            v = str(value or '').strip()
             if not v:
                 return None
-            if op in {"not_equals", "neq"}:
+            if op in {'not_equals', 'neq'}:
                 return Paper.library_id != v
             return Paper.library_id == v
 
@@ -333,20 +295,18 @@ def _smart_query_clause(root: dict[str, Any]) -> ColumnElement[bool] | None:
     def _node_clause(node: Any) -> ColumnElement[bool] | None:
         if not isinstance(node, dict):
             return None
-        ntype = str(node.get("type") or "").strip().lower()
-        if ntype == "rule":
+        ntype = str(node.get('type') or '').strip().lower()
+        if ntype == 'rule':
             return _rule_clause(node)
-        if ntype == "group":
-            op = str(node.get("op") or "and").strip().lower()
-            children = node.get("children")
+        if ntype == 'group':
+            op = str(node.get('op') or 'and').strip().lower()
+            children = node.get('children')
             if not isinstance(children, list):
                 return None
-            clauses = [
-                c for c in (_node_clause(ch) for ch in children) if c is not None
-            ]
+            clauses = [c for c in (_node_clause(ch) for ch in children) if c is not None]
             if not clauses:
                 return None
-            if op == "or":
+            if op == 'or':
                 return or_(*clauses)
             return and_(*clauses)
         return None
@@ -359,48 +319,39 @@ def _accessible_library_ids_subquery(*, user_id: int) -> Select[tuple[str]]:
     shared_subq = (
         select(LibraryShare.library_id)
         .where(LibraryShare.shared_with_user_id == uid)
-        .where(LibraryShare.status == "accepted")
+        .where(LibraryShare.status == 'accepted')
     )
-    return select(Library.id).where(
-        or_(
-            Library.owner_user_id == uid,
-            Library.scope == "global",
-            Library.id.in_(shared_subq),
+    return (
+        select(Library.id)
+        .where(
+            or_(
+                Library.owner_user_id == uid,
+                Library.scope == 'global',
+                Library.id.in_(shared_subq),
+            )
         )
     )
 
 
-def _favorite_ids_for(
-    *, session: Session, user_id: int, paper_ids: list[str]
-) -> set[str]:
+def _favorite_ids_for(*, session: Session, user_id: int, paper_ids: list[str]) -> set[str]:
     if not paper_ids:
         return set()
-    rows = (
-        session.execute(
-            select(PaperFavorite.paper_id)
-            .where(PaperFavorite.user_id == int(user_id))
-            .where(PaperFavorite.paper_id.in_(paper_ids))
-        )
-        .scalars()
-        .all()
-    )
+    rows = session.execute(
+        select(PaperFavorite.paper_id)
+        .where(PaperFavorite.user_id == int(user_id))
+        .where(PaperFavorite.paper_id.in_(paper_ids))
+    ).scalars().all()
     return {str(x) for x in rows}
 
 
-def _to_read_ids_for(
-    *, session: Session, user_id: int, paper_ids: list[str]
-) -> set[str]:
+def _to_read_ids_for(*, session: Session, user_id: int, paper_ids: list[str]) -> set[str]:
     if not paper_ids:
         return set()
-    rows = (
-        session.execute(
-            select(PaperToRead.paper_id)
-            .where(PaperToRead.user_id == int(user_id))
-            .where(PaperToRead.paper_id.in_(paper_ids))
-        )
-        .scalars()
-        .all()
-    )
+    rows = session.execute(
+        select(PaperToRead.paper_id)
+        .where(PaperToRead.user_id == int(user_id))
+        .where(PaperToRead.paper_id.in_(paper_ids))
+    ).scalars().all()
     return {str(x) for x in rows}
 
 
@@ -445,17 +396,17 @@ def list_paper_filter_facets(
     - For papers, authors uses only the first author.
     """
 
-    ft = str(file_type or "").strip().lower() or None
-    if ft not in {None, "paper", "book"}:
+    ft = str(file_type or '').strip().lower() or None
+    if ft not in {None, 'paper', 'book'}:
         ft = None
 
     def _has_text(col: Any) -> Any:
-        return func.length(func.trim(func.coalesce(col, ""))) > 0
+        return func.length(func.trim(func.coalesce(col, ''))) > 0
 
     def _norm_ids(values: list[str] | None) -> list[str]:
         out: list[str] = []
         for v in values or []:
-            s = str(v or "").strip()
+            s = str(v or '').strip()
             if s:
                 out.append(s)
         return out
@@ -466,28 +417,26 @@ def list_paper_filter_facets(
         lib_ids = [str(library_id).strip()]
 
     def _split_tokens(value: str) -> list[str]:
-        s = str(value or "").strip()
+        s = str(value or '').strip()
         if not s:
             return []
 
         # Normalize common separators (authors/genres tend to be messy).
-        s = s.replace("\n", ";")
-        s = s.replace("|", ";")
-        s = s.replace("/", ";")
-        s = re.sub(r"\s+and\s+", ";", s, flags=re.IGNORECASE)
-        s = re.sub(r"\s*&\s*", ";", s)
+        s = s.replace('\n', ';')
+        s = s.replace('|', ';')
+        s = s.replace('/', ';')
+        s = re.sub(r'\s+and\s+', ';', s, flags=re.IGNORECASE)
+        s = re.sub(r'\s*&\s*', ';', s)
 
-        parts = re.split(r"\s*[,;]+\s*", s)
+        parts = re.split(r'\s*[,;]+\s*', s)
         out: list[str] = []
         for p in parts:
-            p = str(p or "").strip()
+            p = str(p or '').strip()
             if p:
                 out.append(p)
         return out
 
-    def _token_facet(
-        *, session: Session, col_name: str, first_only: bool = False
-    ) -> list[tuple[str, int]]:
+    def _token_facet(*, session: Session, col_name: str, first_only: bool = False) -> list[tuple[str, int]]:
         # Pull raw strings then tokenize in Python.
         col = getattr(Paper, col_name)
         stmt = select(col).select_from(Paper).where(_NOT_DELETED)
@@ -507,7 +456,7 @@ def list_paper_filter_facets(
 
         counts: dict[str, int] = {}
         for raw in rows:
-            tokens = _split_tokens(str(raw or ""))
+            tokens = _split_tokens(str(raw or ''))
             if not tokens:
                 continue
             if first_only:
@@ -523,14 +472,7 @@ def list_paper_filter_facets(
         return [(k, int(v)) for (k, v) in items[: int(limit)]]
 
     def _facet(session: Session, col: Any) -> list[tuple[str, int]]:
-        stmt = (
-            select(
-                func.trim(func.coalesce(col, "")).label("v"),
-                func.count(Paper.id).label("c"),
-            )
-            .select_from(Paper)
-            .where(_NOT_DELETED)
-        )
+        stmt = select(func.trim(func.coalesce(col, '')).label('v'), func.count(Paper.id).label('c')).select_from(Paper).where(_NOT_DELETED)
 
         if lib_ids:
             stmt = stmt.where(Paper.library_id.in_(lib_ids))
@@ -544,11 +486,8 @@ def list_paper_filter_facets(
 
         stmt = (
             stmt.where(_has_text(col))
-            .group_by(func.trim(func.coalesce(col, "")))
-            .order_by(
-                func.count(Paper.id).desc(),
-                func.lower(func.trim(func.coalesce(col, ""))).asc(),
-            )
+            .group_by(func.trim(func.coalesce(col, '')))
+            .order_by(func.count(Paper.id).desc(), func.lower(func.trim(func.coalesce(col, ''))).asc())
             .limit(int(limit))
         )
 
@@ -557,22 +496,16 @@ def list_paper_filter_facets(
 
     with get_session() as session:
         return {
-            "authors": _token_facet(
-                session=session, col_name="authors", first_only=True
-            ),
-            "journal": _facet(session, Paper.journal),
-            "publisher": _facet(session, Paper.publisher),
-            "series": _facet(session, Paper.series),
-            "language": _facet(session, Paper.language),
-            "genres": _token_facet(
-                session=session, col_name="genres", first_only=False
-            ),
+            'authors': _token_facet(session=session, col_name='authors', first_only=True),
+            'journal': _facet(session, Paper.journal),
+            'publisher': _facet(session, Paper.publisher),
+            'series': _facet(session, Paper.series),
+            'language': _facet(session, Paper.language),
+            'genres': _token_facet(session=session, col_name='genres', first_only=False),
         }
 
 
-def list_papers(
-    *, user_id: int | None = None, library_id: str | None = None, limit: int | None = 50
-) -> list[PaperItem]:
+def list_papers(*, user_id: int | None = None, library_id: str | None = None, limit: int | None = 50) -> list[PaperItem]:
     with get_session() as session:
         # Default sorting is configurable via Admin → Library.
         try:
@@ -580,29 +513,14 @@ def list_papers(
 
             sort_key = get_default_sort()
         except Exception:
-            sort_key = "recent"
+            sort_key = 'recent'
 
-        if sort_key == "title_asc":
-            stmt = (
-                select(Paper)
-                .where(_NOT_DELETED)
-                .order_by(Paper.title.asc(), Paper.created_at.desc())
-                .options(load_only(*_PAPER_LIST_COLUMNS))
-            )
-        elif sort_key == "title_desc":
-            stmt = (
-                select(Paper)
-                .where(_NOT_DELETED)
-                .order_by(Paper.title.desc(), Paper.created_at.desc())
-                .options(load_only(*_PAPER_LIST_COLUMNS))
-            )
+        if sort_key == 'title_asc':
+            stmt = select(Paper).where(_NOT_DELETED).order_by(Paper.title.asc(), Paper.created_at.desc())
+        elif sort_key == 'title_desc':
+            stmt = select(Paper).where(_NOT_DELETED).order_by(Paper.title.desc(), Paper.created_at.desc())
         else:
-            stmt = (
-                select(Paper)
-                .where(_NOT_DELETED)
-                .order_by(Paper.created_at.desc())
-                .options(load_only(*_PAPER_LIST_COLUMNS))
-            )
+            stmt = select(Paper).where(_NOT_DELETED).order_by(Paper.created_at.desc())
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
 
@@ -619,25 +537,21 @@ def list_papers(
         to_read_ids: set[str] = set()
         if user_id is not None and rows:
             ids = [str(r.id) for r in rows]
-            fav_ids = _favorite_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
-            to_read_ids = _to_read_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
+            fav_ids = _favorite_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
+            to_read_ids = _to_read_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
 
         return [
             PaperItem(
                 id=r.id,
                 title=r.title,
-                subtitle=r.subtitle or "",
+                subtitle=r.subtitle or '',
                 reading_progress=float(r.reading_progress or 0.0),
                 is_completed=bool(r.is_completed),
                 is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
                 is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
                 open_count_total=int(r.open_count_total or 0),
                 open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+                file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
             )
             for r in rows
@@ -655,12 +569,7 @@ def list_recent_papers(
     This is intentionally independent of the Admin default sort setting.
     """
     with get_session() as session:
-        stmt = (
-            select(Paper)
-            .where(_NOT_DELETED)
-            .order_by(Paper.created_at.desc())
-            .options(load_only(*_PAPER_LIST_COLUMNS))
-        )
+        stmt = select(Paper).where(_NOT_DELETED).order_by(Paper.created_at.desc())
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
 
@@ -677,25 +586,21 @@ def list_recent_papers(
         to_read_ids: set[str] = set()
         if user_id is not None and rows:
             ids = [str(r.id) for r in rows]
-            fav_ids = _favorite_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
-            to_read_ids = _to_read_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
+            fav_ids = _favorite_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
+            to_read_ids = _to_read_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
 
         return [
             PaperItem(
                 id=r.id,
                 title=r.title,
-                subtitle=r.subtitle or "",
+                subtitle=r.subtitle or '',
                 reading_progress=float(r.reading_progress or 0.0),
                 is_completed=bool(r.is_completed),
                 is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
                 is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
                 open_count_total=int(r.open_count_total or 0),
                 open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+                file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
             )
             for r in rows
@@ -705,22 +610,18 @@ def list_recent_papers(
 def search_papers(
     *,
     query: str,
-    mode: str = "all",
+    mode: str = 'all',
     user_id: int | None = None,
     library_id: str | None = None,
     limit: int = 500,
 ) -> list[PaperItem]:
-    q = str(query or "").strip()
+    q = str(query or '').strip()
     if not q:
         return []
     mode_key = _normalize_search_mode(mode)
 
     with get_session() as session:
-        stmt = (
-            select(Paper)
-            .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
-        )
+        stmt = select(Paper).where(_NOT_DELETED)
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
 
@@ -737,29 +638,25 @@ def search_papers(
         to_read_ids: set[str] = set()
         if user_id is not None and rows:
             ids = [str(r.id) for r in rows]
-            fav_ids = _favorite_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
-            to_read_ids = _to_read_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
+            fav_ids = _favorite_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
+            to_read_ids = _to_read_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
-                is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or '',
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
+            is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+        )
+        for r in rows
+    ]
 
 
 def _apply_paper_filters(
@@ -769,7 +666,7 @@ def _apply_paper_filters(
     library_id: str | None = None,
     library_ids: list[str] | None = None,
     query: str | None = None,
-    mode: str = "all",
+    mode: str = 'all',
     filters: PaperFilters | None = None,
 ) -> Select:  # type: ignore[type-arg]
     """Apply shared WHERE-clause logic for paper listing and counting.
@@ -779,38 +676,36 @@ def _apply_paper_filters(
     """
 
     f = filters or PaperFilters()
-    ft = str(f.file_type or "").strip().lower() or None
-    if ft not in {None, "paper", "book"}:
+    ft = str(f.file_type or '').strip().lower() or None
+    if ft not in {None, 'paper', 'book'}:
         ft = None
 
-    q = str(query or "").strip()
+    q = str(query or '').strip()
 
     def _has_text(col: Any) -> Any:
-        return func.length(func.trim(func.coalesce(col, ""))) > 0
+        return func.length(func.trim(func.coalesce(col, ''))) > 0
 
     def _norm_list(values: list[str] | None) -> list[str]:
         if not values:
             return []
-        return [str(v).strip() for v in values if str(v or "").strip()]
+        return [str(v).strip() for v in values if str(v or '').strip()]
 
     def _norm_ids(values: list[str] | None) -> list[str]:
-        return [str(v).strip() for v in (values or []) if str(v or "").strip()]
+        return [str(v).strip() for v in (values or []) if str(v or '').strip()]
 
     def _ci_in(col: Any, values: list[str]) -> ColumnElement[bool]:
         vals = [str(v).strip().lower() for v in values if str(v).strip()]
         if not vals:
             return true()
-        return func.lower(func.trim(func.coalesce(col, ""))).in_(vals)
+        return func.lower(func.trim(func.coalesce(col, ''))).in_(vals)
 
     def _ci_contains_any(col: Any, values: list[str]) -> ColumnElement[bool]:
-        _esc2 = str.maketrans({"%": "\\%", "_": "\\_", "\\": "\\\\"})
-        vals = [
-            str(v).strip().lower().translate(_esc2) for v in values if str(v).strip()
-        ]
+        _esc2 = str.maketrans({'%': '\\%', '_': '\\_', '\\': '\\\\'})
+        vals = [str(v).strip().lower().translate(_esc2) for v in values if str(v).strip()]
         if not vals:
             return true()
-        lc = func.lower(func.coalesce(col, ""))
-        return or_(*[lc.like(f"%{v}%", escape="\\") for v in vals])
+        lc = func.lower(func.coalesce(col, ''))
+        return or_(*[lc.like(f'%{v}%', escape='\\') for v in vals])
 
     lib_ids = _norm_ids(library_ids)
     if library_id and str(library_id).strip():
@@ -839,7 +734,9 @@ def _apply_paper_filters(
         stmt = stmt.where(Paper.is_completed.is_(True))
 
     tag_any_match = exists(
-        select(1).select_from(PaperTag).where(PaperTag.paper_id == Paper.id)
+        select(1)
+        .select_from(PaperTag)
+        .where(PaperTag.paper_id == Paper.id)
     )
     if bool(f.no_tags):
         stmt = stmt.where(~tag_any_match)
@@ -852,30 +749,28 @@ def _apply_paper_filters(
                 .select_from(PaperTag)
                 .join(Tag, Tag.id == PaperTag.tag_id)
                 .where(PaperTag.paper_id == Paper.id)
-                .where(func.lower(func.coalesce(Tag.name, "")).in_(tag_lc))
+                .where(func.lower(func.coalesce(Tag.name, '')).in_(tag_lc))
             )
             stmt = stmt.where(tag_match)
 
     marker_any_match = exists(
-        select(1).select_from(PaperMarker).where(PaperMarker.paper_id == Paper.id)
+        select(1)
+        .select_from(PaperMarker)
+        .where(PaperMarker.paper_id == Paper.id)
     )
     if bool(f.no_markers):
         smart_clauses: list[ColumnElement[bool]] = []
         smart_stmt = select(Marker.rules_json).where(Marker.is_smart.is_(True))
         if user_id is not None:
-            smart_stmt = smart_stmt.where(
-                or_(Marker.owner_user_id == int(user_id), Marker.visibility == "global")
-            )
+            smart_stmt = smart_stmt.where(or_(Marker.owner_user_id == int(user_id), Marker.visibility == 'global'))
         with get_session() as session:
-            smart_rules = [
-                str(v or "") for v in session.execute(smart_stmt).scalars().all()
-            ]
+            smart_rules = [str(v or '') for v in session.execute(smart_stmt).scalars().all()]
 
         for raw_rules in smart_rules:
             parsed = _parse_smart_query_v2(raw_rules)
             if not parsed:
                 continue
-            root = parsed.get("root")
+            root = parsed.get('root')
             if not isinstance(root, dict):
                 continue
             clause = _smart_query_clause(root)
@@ -902,7 +797,7 @@ def _apply_paper_filters(
     if year_min is not None and year_max is not None and int(year_min) > int(year_max):
         year_min, year_max = year_max, year_min
     if year_min is not None or year_max is not None:
-        year_trim = func.trim(func.coalesce(Paper.published_year, ""))
+        year_trim = func.trim(func.coalesce(Paper.published_year, ''))
         year_int = func.cast(year_trim, Integer)
         stmt = stmt.where(func.length(year_trim) == 4)
         if year_min is not None:
@@ -964,7 +859,7 @@ def count_papers_filtered(
     library_id: str | None = None,
     library_ids: list[str] | None = None,
     query: str | None = None,
-    mode: str = "all",
+    mode: str = 'all',
     filters: PaperFilters | None = None,
 ) -> int:
     """Return the total count of papers matching the given filters.
@@ -994,9 +889,9 @@ def list_papers_filtered(
     library_id: str | None = None,
     library_ids: list[str] | None = None,
     query: str | None = None,
-    mode: str = "all",
+    mode: str = 'all',
     filters: PaperFilters | None = None,
-    sort: str = "default",
+    sort: str = 'default',
     limit: int | None = 500,
     offset: int = 0,
 ) -> list[PaperItem]:
@@ -1008,9 +903,7 @@ def list_papers_filtered(
 
     with get_session() as session:
         stmt = _apply_paper_filters(
-            select(Paper)
-            .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS)),
+            select(Paper).where(_NOT_DELETED),
             user_id=user_id,
             library_id=library_id,
             library_ids=library_ids,
@@ -1023,46 +916,39 @@ def list_papers_filtered(
         # avoiding duplicate rows from joins.
 
         # Sort
-        sort_key = str(sort or "default").strip().lower() or "default"
-        if sort_key == "recent":
+        sort_key = str(sort or 'default').strip().lower() or 'default'
+        if sort_key == 'recent':
             stmt = stmt.order_by(Paper.created_at.desc())
-        elif sort_key == "title_asc":
+        elif sort_key == 'title_asc':
             stmt = stmt.order_by(Paper.title.asc(), Paper.created_at.desc())
-        elif sort_key == "title_desc":
+        elif sort_key == 'title_desc':
             stmt = stmt.order_by(Paper.title.desc(), Paper.created_at.desc())
-        elif sort_key in {"author_asc", "authors_asc"}:
-            stmt = stmt.order_by(
-                func.lower(func.coalesce(Paper.authors, "")).asc(),
-                Paper.created_at.desc(),
-            )
-        elif sort_key == "year_desc":
-            year_trim = func.trim(func.coalesce(Paper.published_year, ""))
-            year_val = case(
-                (func.length(year_trim) == 4, func.cast(year_trim, Integer)), else_=None
-            )
+        elif sort_key in {'author_asc', 'authors_asc'}:
+            stmt = stmt.order_by(func.lower(func.coalesce(Paper.authors, '')).asc(), Paper.created_at.desc())
+        elif sort_key == 'year_desc':
+            year_trim = func.trim(func.coalesce(Paper.published_year, ''))
+            year_val = case((func.length(year_trim) == 4, func.cast(year_trim, Integer)), else_=None)
             stmt = stmt.order_by(year_val.desc(), Paper.created_at.desc())
-        elif sort_key == "year_asc":
-            year_trim = func.trim(func.coalesce(Paper.published_year, ""))
-            year_val = case(
-                (func.length(year_trim) == 4, func.cast(year_trim, Integer)), else_=None
-            )
+        elif sort_key == 'year_asc':
+            year_trim = func.trim(func.coalesce(Paper.published_year, ''))
+            year_val = case((func.length(year_trim) == 4, func.cast(year_trim, Integer)), else_=None)
             stmt = stmt.order_by(year_val.asc(), Paper.created_at.desc())
-        elif sort_key == "last_opened":
+        elif sort_key == 'last_opened':
             stmt = stmt.order_by(Paper.last_opened_at.desc(), Paper.created_at.desc())
-        elif sort_key == "last_read":
+        elif sort_key == 'last_read':
             stmt = stmt.order_by(Paper.last_read_at.desc(), Paper.created_at.desc())
         else:
             # Default sorting is configurable via Admin → Library.
             try:
                 from papervisor.services.settings import get_default_sort
 
-                default_sort = str(get_default_sort() or "recent").strip().lower()
+                default_sort = str(get_default_sort() or 'recent').strip().lower()
             except Exception:
-                default_sort = "recent"
+                default_sort = 'recent'
 
-            if default_sort == "title_asc":
+            if default_sort == 'title_asc':
                 stmt = stmt.order_by(Paper.title.asc(), Paper.created_at.desc())
-            elif default_sort == "title_desc":
+            elif default_sort == 'title_desc':
                 stmt = stmt.order_by(Paper.title.desc(), Paper.created_at.desc())
             else:
                 stmt = stmt.order_by(Paper.created_at.desc())
@@ -1079,25 +965,21 @@ def list_papers_filtered(
         to_read_ids: set[str] = set()
         if user_id is not None and rows:
             ids = [str(r.id) for r in rows]
-            fav_ids = _favorite_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
-            to_read_ids = _to_read_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
+            fav_ids = _favorite_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
+            to_read_ids = _to_read_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
 
         return [
             PaperItem(
                 id=r.id,
                 title=r.title,
-                subtitle=r.subtitle or "",
+                subtitle=r.subtitle or '',
                 reading_progress=float(r.reading_progress or 0.0),
                 is_completed=bool(r.is_completed),
                 is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
                 is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
                 open_count_total=int(r.open_count_total or 0),
                 open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+                file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
             )
             for r in rows
@@ -1106,13 +988,7 @@ def list_papers_filtered(
 
 def list_books(*, library_id: str | None = None) -> list[PaperItem]:
     with get_session() as session:
-        stmt = (
-            select(Paper)
-            .where(_NOT_DELETED)
-            .where(Paper.file_type == "book")
-            .order_by(Paper.title.asc(), Paper.created_at.desc())
-            .options(load_only(*_PAPER_LIST_COLUMNS))
-        )
+        stmt = select(Paper).where(_NOT_DELETED).where(Paper.file_type == 'book').order_by(Paper.title.asc(), Paper.created_at.desc())
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
         rows = session.execute(stmt).scalars().all()
@@ -1120,24 +996,22 @@ def list_books(*, library_id: str | None = None) -> list[PaperItem]:
             PaperItem(
                 id=r.id,
                 title=r.title,
-                subtitle=r.subtitle or "",
+                subtitle=r.subtitle or '',
                 reading_progress=float(r.reading_progress or 0.0),
                 is_completed=bool(r.is_completed),
                 is_favorite=False,
                 open_count_total=int(r.open_count_total or 0),
                 open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+                file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
             )
             for r in rows
         ]
 
 
-def get_dashboard_counts(
-    *, user_id: int | None = None, library_id: str | None = None
-) -> dict[str, int]:
+def get_dashboard_counts(*, user_id: int | None = None, library_id: str | None = None) -> dict[str, int]:
     with get_session() as session:
-        base = select(Paper).where(_NOT_DELETED)
+        base = select(Paper.id).select_from(Paper)
         if library_id:
             base = base.where(Paper.library_id == library_id)
 
@@ -1145,15 +1019,18 @@ def get_dashboard_counts(
             allowed = _accessible_library_ids_subquery(user_id=int(user_id))
             base = base.where(Paper.library_id.in_(allowed))
 
-        # ⚡ Bolt Optimization:
-        # Replaced 4 separate database queries with a single query using conditional aggregation.
-        # This prevents N+1-like performance degradation on the dashboard by reducing DB round trips from 4 to 1.
-        cols = [
-            func.count(Paper.id).label("total"),
-            func.sum(case((Paper.is_completed.is_(True), 1), else_=0)).label("completed"),
-        ]
+        total = session.execute(select(func.count()).select_from(base.subquery())).scalar_one()
 
-        if user_id is not None:
+        completed = session.execute(
+            select(func.count()).select_from(
+                base.where(Paper.is_completed.is_(True)).subquery()
+            )
+        ).scalar_one()
+
+        if user_id is None:
+            favorites = 0
+            to_read = 0
+        else:
             uid = int(user_id)
             fav_match = exists(
                 select(1)
@@ -1167,42 +1044,24 @@ def get_dashboard_counts(
                 .where(PaperToRead.user_id == uid)
                 .where(PaperToRead.paper_id == Paper.id)
             )
-            cols.extend([
-                func.sum(case((fav_match, 1), else_=0)).label("favorites"),
-                func.sum(case((to_read_match, 1), else_=0)).label("to_read"),
-            ])
 
-        stmt = base.with_only_columns(*cols)
-        row = session.execute(stmt).one()
+            favorites = session.execute(
+                select(func.count()).select_from(base.where(fav_match).subquery())
+            ).scalar_one()
+            to_read = session.execute(
+                select(func.count()).select_from(base.where(to_read_match).subquery())
+            ).scalar_one()
 
-        total = row.total or 0
-        completed = row.completed or 0
-        if user_id is not None:
-            favorites = row.favorites or 0
-            to_read = row.to_read or 0
-        else:
-            favorites = 0
-            to_read = 0
-
-    return {
-        "total": int(total),
-        "favorites": int(favorites),
-        "to_read": int(to_read),
-        "completed": int(completed),
-    }
+    return {'total': int(total), 'favorites': int(favorites), 'to_read': int(to_read), 'completed': int(completed)}
 
 
-def list_favorite_papers(
-    *, user_id: int | None = None, library_id: str | None = None, limit: int = 50
-) -> list[PaperItem]:
+def list_favorite_papers(*, user_id: int | None = None, library_id: str | None = None, limit: int = 50) -> list[PaperItem]:
     if user_id is None:
         return []
 
     with get_session() as session:
         stmt = (
-            select(Paper)
-            .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            select(Paper).where(_NOT_DELETED)
             .join(PaperFavorite, PaperFavorite.paper_id == Paper.id)
             .where(PaperFavorite.user_id == int(user_id))
             .order_by(PaperFavorite.created_at.desc(), Paper.created_at.desc())
@@ -1215,41 +1074,33 @@ def list_favorite_papers(
         fav_ids = {str(r.id) for r in rows}
         to_read_ids: set[str] = set()
         if rows:
-            to_read_ids = _to_read_ids_for(
-                session=session,
-                user_id=int(user_id),
-                paper_ids=[str(r.id) for r in rows],
-            )
+            to_read_ids = _to_read_ids_for(session=session, user_id=int(user_id), paper_ids=[str(r.id) for r in rows])
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=str(r.id) in fav_ids,
-                is_to_read=str(r.id) in to_read_ids,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or '',
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=str(r.id) in fav_ids,
+            is_to_read=str(r.id) in to_read_ids,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+        )
+        for r in rows
+    ]
 
 
-def list_to_read_papers(
-    *, user_id: int | None = None, library_id: str | None = None, limit: int = 50
-) -> list[PaperItem]:
+def list_to_read_papers(*, user_id: int | None = None, library_id: str | None = None, limit: int = 50) -> list[PaperItem]:
     if user_id is None:
         return []
 
     with get_session() as session:
         stmt = (
-            select(Paper)
-            .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            select(Paper).where(_NOT_DELETED)
             .join(PaperToRead, PaperToRead.paper_id == Paper.id)
             .where(PaperToRead.user_id == int(user_id))
             .order_by(PaperToRead.created_at.desc(), Paper.created_at.desc())
@@ -1262,38 +1113,30 @@ def list_to_read_papers(
 
         fav_ids: set[str] = set()
         if rows:
-            fav_ids = _favorite_ids_for(
-                session=session,
-                user_id=int(user_id),
-                paper_ids=[str(r.id) for r in rows],
-            )
+            fav_ids = _favorite_ids_for(session=session, user_id=int(user_id), paper_ids=[str(r.id) for r in rows])
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=str(r.id) in fav_ids,
-                is_to_read=True,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or '',
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=str(r.id) in fav_ids,
+            is_to_read=True,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+        )
+        for r in rows
+    ]
 
 
-def list_continue_reading(
-    *, user_id: int | None = None, library_id: str | None = None, limit: int = 24
-) -> list[PaperItem]:
+def list_continue_reading(*, user_id: int | None = None, library_id: str | None = None, limit: int = 24) -> list[PaperItem]:
     with get_session() as session:
         stmt = (
-            select(Paper)
-            .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
+            select(Paper).where(_NOT_DELETED)
             .where(Paper.is_completed.is_(False))
             .where(Paper.reading_progress > 0)
             .order_by(
@@ -1314,44 +1157,33 @@ def list_continue_reading(
         to_read_ids: set[str] = set()
         if user_id is not None and rows:
             ids = [str(r.id) for r in rows]
-            fav_ids = _favorite_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
-            to_read_ids = _to_read_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
+            fav_ids = _favorite_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
+            to_read_ids = _to_read_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
-                is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or '',
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
+            is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+        )
+        for r in rows
+    ]
 
 
-def list_most_opened(
-    *, user_id: int | None = None, library_id: str | None = None, limit: int = 20
-) -> list[PaperItem]:
+def list_most_opened(*, user_id: int | None = None, library_id: str | None = None, limit: int = 20) -> list[PaperItem]:
     with get_session() as session:
-        stmt = (
-            select(Paper)
-            .where(_NOT_DELETED)
-            .options(load_only(*_PAPER_LIST_COLUMNS))
-            .order_by(
-                Paper.open_count_since_reset.desc(),
-                Paper.open_count_total.desc(),
-                Paper.created_at.desc(),
-            )
+        stmt = select(Paper).where(_NOT_DELETED).order_by(
+            Paper.open_count_since_reset.desc(),
+            Paper.open_count_total.desc(),
+            Paper.created_at.desc(),
         )
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
@@ -1365,26 +1197,22 @@ def list_most_opened(
         to_read_ids: set[str] = set()
         if user_id is not None and rows:
             ids = [str(r.id) for r in rows]
-            fav_ids = _favorite_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
-            to_read_ids = _to_read_ids_for(
-                session=session, user_id=int(user_id), paper_ids=ids
-            )
+            fav_ids = _favorite_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
+            to_read_ids = _to_read_ids_for(session=session, user_id=int(user_id), paper_ids=ids)
 
-        return [
-            PaperItem(
-                id=r.id,
-                title=r.title,
-                subtitle=r.subtitle or "",
-                reading_progress=float(r.reading_progress or 0.0),
-                is_completed=bool(r.is_completed),
-                is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
-                is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
-                open_count_total=int(r.open_count_total or 0),
-                open_count_since_reset=int(r.open_count_since_reset or 0),
-                file_suffix=Path(str(r.file_path or "")).suffix if r.file_path else "",
+    return [
+        PaperItem(
+            id=r.id,
+            title=r.title,
+            subtitle=r.subtitle or '',
+            reading_progress=float(r.reading_progress or 0.0),
+            is_completed=bool(r.is_completed),
+            is_favorite=(str(r.id) in fav_ids) if user_id is not None else False,
+            is_to_read=(str(r.id) in to_read_ids) if user_id is not None else False,
+            open_count_total=int(r.open_count_total or 0),
+            open_count_since_reset=int(r.open_count_since_reset or 0),
+            file_suffix=Path(str(r.file_path or '')).suffix if r.file_path else '',
                 file_type=str(r.file_type or "paper"),
-            )
-            for r in rows
-        ]
+        )
+        for r in rows
+    ]

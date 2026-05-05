@@ -29,15 +29,15 @@ from papervisor.core.config import get_paths
 
 class MetadataActions:
     """Encapsulates logic for metadata dialog actions to reduce main dialog size."""
-    
+
     def __init__(self, dialog):
         """Pass the main dialog instance so we can read its state and notify it."""
         self.dialog = dialog
-        
+
     @property
     def state(self):
         return self.dialog.state
-        
+
     @property
     def paper(self):
         return self.dialog.state.paper
@@ -88,10 +88,10 @@ class MetadataActions:
     async def save_metadata(self) -> None:
         if not self.paper:
             return
-            
+
         btn = self.dialog.save_btn
         if btn: btn.disable()
-            
+
         try:
             self.dialog._set_busy('Saving…')
             self._notify('Saving...', color='info')
@@ -141,12 +141,12 @@ class MetadataActions:
 
             self.state.dirty_state = False
             self.dialog._set_visible(self.dialog.dirty_badge, False)
-            
+
             try:
                 self.dialog.tabs.value = 'Details'
             except Exception:
                 pass
-                
+
             self._notify('Saved', color='positive')
             if self.dialog._on_changed is not None:
                 self.dialog._on_changed()
@@ -199,7 +199,7 @@ class MetadataActions:
     async def fetch_doi(self):
         if not self.paper:
             return
-            
+
         timeout_sec = get_metadata_provider_timeout_seconds()
         doi = self.dialog._get_input_value('doi')
         if not doi:
@@ -210,7 +210,7 @@ class MetadataActions:
             meta = await asyncio.to_thread(fetch_doi_metadata, doi=str(doi).strip(), timeout_s=timeout_sec)
             if self.state.fetch_cancel_requested:
                 raise asyncio.CancelledError('Fetch canceled by user')
-                
+
             if meta:
                 # Apply all fields that aren't locked
                 self.dialog._apply_paper(meta)
@@ -221,7 +221,7 @@ class MetadataActions:
     async def fetch_isbn(self):
         if not self.paper:
             return
-            
+
         timeout_sec = get_metadata_provider_timeout_seconds()
         isbn = self.dialog._get_input_value('isbn')
         if not isbn:
@@ -260,7 +260,7 @@ class MetadataActions:
     async def extract_doi(self):
         if not self.paper:
             return
-            
+
         fp = str(self.paper.file_path or '').strip()
         if not fp:
             self._notify('No file attached', color='warning')
@@ -298,7 +298,7 @@ class MetadataActions:
             return
 
         timeout_sec = get_metadata_provider_timeout_seconds()
-        
+
         async with self._action_context('Analyzing file…'):
             def _detect():
                 if str(p).lower().endswith('.epub'):
@@ -378,7 +378,7 @@ class MetadataActions:
             else:
                 self._notify('Preview only supported for PDF and EPUB.', color='warning')
                 return
-            
+
             # Allow file system flush
             await asyncio.sleep(0.5)
             self.dialog._refresh_media()
@@ -400,7 +400,7 @@ class MetadataActions:
 
         self.dialog._set_busy('Fetching cover…')
         timeout_sec = get_metadata_provider_timeout_seconds()
-        
+
         try:
             res = await asyncio.to_thread(
                 fetch_and_save_cover,
@@ -418,16 +418,16 @@ class MetadataActions:
             self._notify(f'Cover fetch failed: {ex}', color='negative')
         finally:
             self.dialog._set_busy(None)
-            
+
     async def process_replace_upload(self, e):
         """Handle the upload of a replacement file."""
         if not self.paper:
             return
-            
+
         name = str(getattr(e, 'name', None) or getattr(e, 'filename', None) or 'upload.bin')
         content = getattr(e, 'content', None)
         data: bytes | None = None
-        
+
         try:
             if content is None:
                 data = None
@@ -452,9 +452,9 @@ class MetadataActions:
         self.dialog._set_busy('Replacing file…')
         try:
             lib_id = str(self.paper.library_id or getattr(self.dialog.library_in, 'value', None) or '').strip()
-            
+
             from papervisor.services.papers import replace_paper_file
-            
+
             imported = await asyncio.to_thread(
                 replace_paper_file,
                 paper_id=str(self.paper.id),

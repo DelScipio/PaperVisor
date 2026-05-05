@@ -48,7 +48,7 @@ def render_maintenance_panel(
         with ui.card().props('flat bordered').classes('pv-dialog-card w-full'):
             ui.label('Filter by User').classes('text-sm font-semibold')
             ui.label('Select a user to limit operations to their libraries only').classes('text-xs pv-text-dimmer')
-            
+
             with ui.row().classes('w-full items-center gap-3 pt-2'):
                 try:
                     users = list_users()
@@ -618,7 +618,7 @@ def render_maintenance_panel(
 
                 dry_run_cb = ui.checkbox('Dry run (preview only, no actual deletions)', value=True).classes('text-sm pt-2')
                 delete_dirs_cb = ui.checkbox('Also delete orphaned user folders from disk', value=False).classes('text-sm')
-                
+
                 with ui.row().classes('w-full items-center gap-2 pt-2'):
                     ui.icon('warning', color='orange').classes('text-base')
                     ui.label('Recommended: Run with dry run enabled first to review what will be deleted').classes('text-xs text-orange')

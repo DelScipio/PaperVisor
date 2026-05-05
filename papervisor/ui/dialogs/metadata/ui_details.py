@@ -41,7 +41,7 @@ def render_details_view(
 ) -> dict[str, ui.element]:
     """Render the read-only details view and return a dict of specific row elements for visibility toggling."""
     rows = {}
-    
+
     header_card = ui.card().props('flat bordered').classes('pv-meta-header w-full no-shadow')
     with header_card:
         with ui.row().classes('w-full items-start justify-between gap-4'):
@@ -58,7 +58,7 @@ def render_details_view(
                 ui.button(icon='upload', on_click=open_replace_dlg_fn).props('flat dense').classes('pv-meta-action-btn').tooltip('Replace file')
                 ui.button(icon='download', on_click=download_paper_fn).props('flat dense').classes('pv-meta-action-btn').tooltip('Download')
                 ui.button(icon='content_copy', on_click=copy_path_fn).props('flat dense').classes('pv-meta-action-btn').tooltip('Copy file path')
-    
+
     cards_grid = ui.element('div').classes('w-full grid grid-cols-1 gap-1')
     with cards_grid:
         id_card = section_card(icon='badge', title='Details')
@@ -71,7 +71,7 @@ def render_details_view(
 
                 rows['publisher'], _ = kv_cell(label='Publisher', value=paper.publisher or '')
                 rows['journal'], _ = kv_cell(label='Journal', value=paper.journal or '')
-                
+
                 doi_href = f'https://doi.org/{paper.doi}' if paper.doi else ''
                 rows['doi'], _ = kv_link_cell(label='DOI', value=paper.doi or '', href=doi_href)
                 rows['isbn'], _ = kv_cell(label='ISBN', value=paper.isbn or '')
@@ -104,7 +104,7 @@ def render_details_view(
             view_desc_collapsed = ui.label(desc_text).classes('pv-meta-desc-text break-words').style('display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden;')
             view_desc_full = ui.label(desc_text).classes('pv-meta-desc-text break-words')
             view_desc_full.set_visibility(False)
-            
+
             show_toggle = len(desc_text) >= 200
             desc_toggle = ui.label('Show more').classes('pv-meta-desc-toggle w-fit').tooltip('Expand/collapse')
             if not show_toggle:
@@ -132,7 +132,7 @@ def render_details_view(
                         c.visible = True
                         f.visible = False
                     t.text = 'Show more'
-            
+
             desc_toggle.on('click', _toggle_desc)
 
     return rows

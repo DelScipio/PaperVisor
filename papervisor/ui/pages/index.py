@@ -75,7 +75,7 @@ def index() -> None:
             refreshables['render_content'].refresh()
 
     user_id = int(app.storage.user.get('user_id') or 0)
-    
+
     # Clean up event subscriptions
     clear_events()
 
@@ -377,7 +377,7 @@ def index() -> None:
             on_toggle_markers=_toggle_markers,
             on_toggle_auto_markers=_toggle_auto_markers,
         )
-    
+
     refreshables['render_left_nav'] = render_left_nav
 
     filters_header_menu = None
@@ -716,7 +716,7 @@ def index() -> None:
             # Copied from original file, need to make sure I don't miss anything.
             # I will assume the previous content logic is preserved and just pasted here.
             # I need to duplicate the render_content logic here in the tool call.
-            
+
             libs = list_libraries_for_user(user_id=user_id)
             markers = list_markers(user_id=user_id)
             lib_name_by_id = {l.id: l.name for l in libs}

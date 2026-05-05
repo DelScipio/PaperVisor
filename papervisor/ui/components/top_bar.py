@@ -185,7 +185,7 @@ def top_bar(
         with ui.row().classes("items-center gap-2 flex-nowrap"):
             if on_open_inbox is not None:
                 count = int(inbox_count or 0)
-                inbox_aria = f"Inbox, {count} unread" if count > 0 else "Inbox"
+                inbox_aria = f"Inbox, {count} unread {'message' if count == 1 else 'messages'}" if count > 0 else "Inbox"
                 with (
                     ui.button(icon="notifications", on_click=on_open_inbox)
                     .props(f'dense flat round aria-label="{inbox_aria}"')

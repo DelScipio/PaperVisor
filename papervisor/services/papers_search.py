@@ -7,7 +7,7 @@ from typing import Any
 
 from sqlalchemy import Integer, and_, case, exists, select, true
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, load_only
+from sqlalchemy.orm import Session
 from sqlalchemy.sql import Select
 from sqlalchemy.sql.elements import ColumnElement
 
@@ -23,32 +23,12 @@ from papervisor.db.models import (
     Tag,
 )
 
-from papervisor.db.session import get_session
+from papervisor.db.session import get_session, use_session
 from papervisor.domain import PaperItem
 
 
 # Soft-delete filter: reusable clause to exclude trashed papers.
 _NOT_DELETED = Paper.deleted_at.is_(None)
-
-_PAPER_LOAD_OPTIONS = load_only(
-    Paper.id,
-    Paper.title,
-    Paper.subtitle,
-    Paper.reading_progress,
-    Paper.is_completed,
-    Paper.open_count_total,
-    Paper.open_count_since_reset,
-    Paper.file_path,
-    Paper.file_type,
-    # Need these for sorting logic:
-    Paper.authors,
-    Paper.published_year,
-    Paper.created_at,
-    Paper.last_opened_at,
-    Paper.last_read_at,
-    Paper.library_id,
-)
-
 
 
 @dataclass(frozen=True)
@@ -536,11 +516,11 @@ def list_papers(*, user_id: int | None = None, library_id: str | None = None, li
             sort_key = 'recent'
 
         if sort_key == 'title_asc':
-            stmt = select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED).order_by(Paper.title.asc(), Paper.created_at.desc())
+            stmt = select(Paper).where(_NOT_DELETED).order_by(Paper.title.asc(), Paper.created_at.desc())
         elif sort_key == 'title_desc':
-            stmt = select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED).order_by(Paper.title.desc(), Paper.created_at.desc())
+            stmt = select(Paper).where(_NOT_DELETED).order_by(Paper.title.desc(), Paper.created_at.desc())
         else:
-            stmt = select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED).order_by(Paper.created_at.desc())
+            stmt = select(Paper).where(_NOT_DELETED).order_by(Paper.created_at.desc())
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
 
@@ -589,7 +569,7 @@ def list_recent_papers(
     This is intentionally independent of the Admin default sort setting.
     """
     with get_session() as session:
-        stmt = select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED).order_by(Paper.created_at.desc())
+        stmt = select(Paper).where(_NOT_DELETED).order_by(Paper.created_at.desc())
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
 
@@ -641,7 +621,7 @@ def search_papers(
     mode_key = _normalize_search_mode(mode)
 
     with get_session() as session:
-        stmt = select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED)
+        stmt = select(Paper).where(_NOT_DELETED)
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
 
@@ -923,7 +903,7 @@ def list_papers_filtered(
 
     with get_session() as session:
         stmt = _apply_paper_filters(
-            select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED),
+            select(Paper).where(_NOT_DELETED),
             user_id=user_id,
             library_id=library_id,
             library_ids=library_ids,
@@ -1008,7 +988,7 @@ def list_papers_filtered(
 
 def list_books(*, library_id: str | None = None) -> list[PaperItem]:
     with get_session() as session:
-        stmt = select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED).where(Paper.file_type == 'book').order_by(Paper.title.asc(), Paper.created_at.desc())
+        stmt = select(Paper).where(_NOT_DELETED).where(Paper.file_type == 'book').order_by(Paper.title.asc(), Paper.created_at.desc())
         if library_id:
             stmt = stmt.where(Paper.library_id == library_id)
         rows = session.execute(stmt).scalars().all()
@@ -1081,7 +1061,7 @@ def list_favorite_papers(*, user_id: int | None = None, library_id: str | None =
 
     with get_session() as session:
         stmt = (
-            select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED)
+            select(Paper).where(_NOT_DELETED)
             .join(PaperFavorite, PaperFavorite.paper_id == Paper.id)
             .where(PaperFavorite.user_id == int(user_id))
             .order_by(PaperFavorite.created_at.desc(), Paper.created_at.desc())
@@ -1120,7 +1100,7 @@ def list_to_read_papers(*, user_id: int | None = None, library_id: str | None = 
 
     with get_session() as session:
         stmt = (
-            select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED)
+            select(Paper).where(_NOT_DELETED)
             .join(PaperToRead, PaperToRead.paper_id == Paper.id)
             .where(PaperToRead.user_id == int(user_id))
             .order_by(PaperToRead.created_at.desc(), Paper.created_at.desc())
@@ -1156,7 +1136,7 @@ def list_to_read_papers(*, user_id: int | None = None, library_id: str | None = 
 def list_continue_reading(*, user_id: int | None = None, library_id: str | None = None, limit: int = 24) -> list[PaperItem]:
     with get_session() as session:
         stmt = (
-            select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED)
+            select(Paper).where(_NOT_DELETED)
             .where(Paper.is_completed.is_(False))
             .where(Paper.reading_progress > 0)
             .order_by(
@@ -1200,7 +1180,7 @@ def list_continue_reading(*, user_id: int | None = None, library_id: str | None 
 
 def list_most_opened(*, user_id: int | None = None, library_id: str | None = None, limit: int = 20) -> list[PaperItem]:
     with get_session() as session:
-        stmt = select(Paper).options(_PAPER_LOAD_OPTIONS).where(_NOT_DELETED).order_by(
+        stmt = select(Paper).where(_NOT_DELETED).order_by(
             Paper.open_count_since_reset.desc(),
             Paper.open_count_total.desc(),
             Paper.created_at.desc(),

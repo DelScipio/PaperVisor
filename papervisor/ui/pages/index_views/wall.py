@@ -25,31 +25,30 @@ def render_wall_section(
     on_refresh_left_nav,
     remove_mode: str | None = None,
     on_empty_action=None,
-    display_mode: str = "grid",
+    display_mode: str = 'grid',
     get_list_limit,
     load_more_fn,
 ) -> None:
-    with ui.column().classes("w-full"):
-
+    with ui.column().classes('w-full'):
         def _changed() -> None:
             on_refresh_left_nav()
 
         wall_kwargs: dict[str, object] = {
-            "user_id": user_id,
-            "title": title,
-            "papers": papers,
-            "on_open_metadata": open_metadata,
-            "on_open_reader": open_reader,
-            "on_share_paper": open_share_paper,
-            "on_changed": _changed,
-            "view": view_name,
+            'user_id': user_id,
+            'title': title,
+            'papers': papers,
+            'on_open_metadata': open_metadata,
+            'on_open_reader': open_reader,
+            'on_share_paper': open_share_paper,
+            'on_changed': _changed,
+            'view': view_name,
         }
         if remove_mode is not None:
-            wall_kwargs["remove_mode"] = remove_mode
+            wall_kwargs['remove_mode'] = remove_mode
         if on_empty_action is not None:
-            wall_kwargs["on_empty_action"] = on_empty_action
+            wall_kwargs['on_empty_action'] = on_empty_action
 
-        if display_mode == "list":
+        if display_mode == 'list':
             list_wall(**wall_kwargs)
         else:
             poster_wall(**wall_kwargs)
@@ -61,13 +60,11 @@ def _render_infinite_loader(*, has_more: bool, load_more_fn) -> None:
         return
 
     # Fallback button (kept hidden; JS triggers it when sentinel is visible).
-    ui.button("", on_click=lambda _e=None: load_more_fn()).props(
-        "id=pv_infinite_btn"
-    ).classes("hidden")
+    ui.button('', on_click=lambda _e=None: load_more_fn()).props('id=pv_infinite_btn').style('display:none')
 
     # Sentinel element observed by IntersectionObserver.
-    ui.element("div").props("id=pv_infinite_sentinel").style("height: 1px; width: 100%")
-    inline_loading_state("Loading more…")
+    ui.element('div').props('id=pv_infinite_sentinel').style('height: 1px; width: 100%')
+    inline_loading_state('Loading more…')
 
     ui.run_javascript(
         """
@@ -105,15 +102,11 @@ def _paged_query(fetch_page, get_list_limit) -> tuple[list[PaperItem], bool]:
 
 
 def _paged_filtered(*, get_list_limit, **kwargs) -> tuple[list[PaperItem], bool]:
-    return _paged_query(
-        lambda limit: list_papers_filtered(limit=limit, **kwargs), get_list_limit
-    )
+    return _paged_query(lambda limit: list_papers_filtered(limit=limit, **kwargs), get_list_limit)
 
 
 def _paged_marker_filtered(*, get_list_limit, **kwargs) -> tuple[list[PaperItem], bool]:
-    return _paged_query(
-        lambda limit: list_marker_papers_filtered(limit=limit, **kwargs), get_list_limit
-    )
+    return _paged_query(lambda limit: list_marker_papers_filtered(limit=limit, **kwargs), get_list_limit)
 
 
 def render_query_views(
@@ -167,25 +160,25 @@ def render_query_views(
             load_more_fn=load_more_fn,
         )
 
-    if view == "search":
+    if view == 'search':
         query = state.search_query.strip()
         mode = state.search_mode
         _filtered_wall_section(
-            title=f"Search: {query}",
+            title=f'Search: {query}',
             query=query,
             mode=mode,
             sort=sort_key,
-            view_name="search",
+            view_name='search',
         )
         return True
 
-    if view == "recent":
+    if view == 'recent':
         _filtered_wall_section(
-            title="Recently added",
+            title='Recently added',
             query=None,
-            mode="all",
-            sort="recent",
-            view_name="all",
+            mode='all',
+            sort='recent',
+            view_name='all',
             on_empty_action=open_upload_dialog,
         )
         return True
@@ -211,7 +204,7 @@ def render_category_views(
     def _category_section(*, title: str, category: str) -> None:
         category_filters = (
             replace(eff_filters, favorites_only=True)
-            if category == "favorites"
+            if category == 'favorites'
             else replace(eff_filters, to_read_only=True)
         )
         papers, has_more = _paged_filtered(
@@ -219,7 +212,7 @@ def render_category_views(
             user_id=user_id,
             library_ids=eff_library_ids,
             query=None,
-            mode="all",
+            mode='all',
             filters=category_filters,
             sort=sort_key,
         )
@@ -239,12 +232,12 @@ def render_category_views(
             load_more_fn=load_more_fn,
         )
 
-    if view == "favorites":
-        _category_section(title="Favorites", category="favorites")
+    if view == 'favorites':
+        _category_section(title='Favorites', category='favorites')
         return True
 
-    if view == "to_read":
-        _category_section(title="To Read", category="to_read")
+    if view == 'to_read':
+        _category_section(title='To Read', category='to_read')
         return True
 
     return False
@@ -267,10 +260,10 @@ def render_marker_view(
     get_list_limit,
     load_more_fn,
 ) -> bool:
-    if view != "marker" or not marker_id:
+    if view != 'marker' or not marker_id:
         return False
 
-    title = marker_name_by_id.get(marker_id, "Marker")
+    title = marker_name_by_id.get(marker_id, 'Marker')
     papers, has_more = _paged_marker_filtered(
         get_list_limit=get_list_limit,
         user_id=user_id,
@@ -283,7 +276,7 @@ def render_marker_view(
         user_id=user_id,
         title=title,
         papers=papers,
-        view_name="marker",
+        view_name='marker',
         has_more=has_more,
         open_metadata=open_metadata,
         open_reader=open_reader,

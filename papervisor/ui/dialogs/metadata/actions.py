@@ -171,11 +171,11 @@ class MetadataActions:
                 if root != rp and root not in rp.parents:
                     self._notify('File is outside library directory', color='warning')
                     return
-            except Exception:
+            except (OSError, ValueError, RuntimeError):
                 # 🛡️ Sentinel: Fail securely on path resolution exceptions to prevent traversal bypass
                 self._notify('File access denied', color='warning')
                 return
-            ui.download(p, filename=p.name)
+            ui.download(rp, filename=rp.name)
         except Exception as ex:
             self._notify(str(ex), color='negative')
 

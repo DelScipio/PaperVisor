@@ -86,7 +86,6 @@ def top_bar(
             ):
                 ui.label("PaperVisor").classes("text-lg font-semibold")
 
-
         ui.space()
 
         with ui.row().classes(

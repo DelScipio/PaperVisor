@@ -15,14 +15,14 @@ except Exception as e:
 def test_no_db():
     print("Testing generate_acquisition_feed with mock data...")
     p1 = Paper(id="1234", title="Test Paper 1", updated_at=datetime.now(UTC), file_path="test.pdf")
-    
+
     m1 = MarkerItem(id="m1", name="Important", icon="star", is_smart=False, scope="all", paper_count=1, owner_user_id=1, visibility="global", is_owned_by_me=True)
     m2 = MarkerItem(id="m2", name="AI", icon="robot", is_smart=True, scope="all", paper_count=1, owner_user_id=1, visibility="global", is_owned_by_me=True)
-    
+
     paper_markers_map = {
         "1234": [m1, m2]
     }
-    
+
     xml = generate_acquisition_feed(
         feed_id="urn:test",
         title="Mock Feed",
@@ -31,9 +31,9 @@ def test_no_db():
         self_href="http://localhost/test",
         paper_markers_map=paper_markers_map
     )
-    
+
     print(xml)
-    
+
     if "Important" in xml and "http://papervisor.app/markers" in xml and "AI" in xml:
         print("\nSUCCESS: Both markers rendered in the XML format!")
     else:
